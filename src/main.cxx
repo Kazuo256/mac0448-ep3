@@ -2,18 +2,20 @@
 #include "network.h"
 
 #include <cstdlib>
-#include <cstdio>
+#include <iostream>
 
-using std::printf;
+using std::cout;
+using std::endl;
 using ep3::Network;
 
 int main (int argc, char** argv) { 
   if (argc != 2) {
-    printf("Uso:\n\t%s <arquivo_de_topologia>\n", argv[0]);
+    cout << "Uso:\n\t" << argv[0] << " <arquivo_de_topologia>\n";
     return EXIT_FAILURE;
   }
   Network network;
-  network.load_topology(argv[1]);
+  size_t router_num = network.load_topology(argv[1]);
+  cout << "Number of routers in the network: " << router_num << endl;
   return EXIT_SUCCESS;
 }
 

@@ -12,10 +12,10 @@ namespace ep3 {
 class Network {
   public:
     Network () {}
-    void load_topology (const std::string& topology_file);
+    size_t load_topology (const std::string& topology_file);
+    double get_delay (unsigned id_sender, unsigned id_receiver) const;
   private:
     typedef std::vector< std::vector<double> > Topology;
-    std::vector<Router> routers_;
     Topology            topology_;
 };
 

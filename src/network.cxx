@@ -18,8 +18,8 @@ using std::endl;
 
 namespace ep3 {
 
-void Network::load_topology (const string& topology_file) {
-  size_t   router_num = 0, count = 0;
+size_t Network::load_topology (const string& topology_file) {
+  size_t   node_num = 0, count = 0;
   ifstream file(topology_file.c_str(), ifstream::in);
 
   topology_.clear();
@@ -29,13 +29,18 @@ void Network::load_topology (const string& topology_file) {
     stringstream stream(line, stringstream::in);
     topology_.push_back(vector<double>());
     while(!stream.eof()) {
-      double delay;
-      stream >> delay;
-      topology_.back().push_back(delay);
+      double cost;
+      stream >> cost;
+      topology_.back().push_back(cost);
     }
-    router_num = max(router_num, topology_.back().size());
+    node_num = max(node_num, topology_.back().size());
     count++;
-  } while (count < router_num);
+  } while (count < node_num);
+  return node_num;
+}
+
+double Network::get_delay (unsigned id_sender, unsigned id_receiver) const {
+  return topology_[id_sender][id_receiver];
 }
 
 } // namespce ep3
