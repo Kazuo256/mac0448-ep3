@@ -7,6 +7,8 @@ include_directories (src)
 set (
   EP3_SRC
   src/main.cxx
+  src/network.cxx
+  src/router.cxx
 )
 
 add_executable (ep3 ${EP3_SRC})
