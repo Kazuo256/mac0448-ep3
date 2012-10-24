@@ -13,6 +13,7 @@ class Network {
     struct Packet {
       Packet (unsigned id_sender, unsigned id_receiver, const std::string& msg)
         : id_sender_(id_sender), id_receiver_(id_receiver), msg_(msg) {}
+      operator std::string () const;
       unsigned    id_sender_,
                   id_receiver_;
       std::string msg_;

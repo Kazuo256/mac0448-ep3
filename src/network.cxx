@@ -54,13 +54,21 @@ void Network::send (unsigned id_sender, unsigned id_receiver,
                     const string& msg) {
   if (topology_[id_sender][id_receiver] < 0.0)
     return;
-  packets_.push(Packet(id_sender, id_receiver, msg)); 
+  Packet packet(id_sender, id_receiver, msg);
+  packets_.push(packet); 
 }
 
 Network::Packet Network::next_msg () {
-  Packet packet = packets_.back();
+  Packet packet = packets_.front();
   packets_.pop();
   return packet;
+}
+
+Network::Packet::operator string () const {
+  stringstream stream;
+  stream << "(" << id_sender_ << " -> " << id_receiver_
+         << "):" << msg_;
+  return stream.str();
 }
 
 } // namespce ep3
