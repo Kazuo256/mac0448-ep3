@@ -15,6 +15,8 @@ class Router {
     unsigned id () const { return id_; }
     void receive_msg (unsigned id_sender, const std::string& msg);
     void start_up ();
+    void linkstate_begin ();
+    void distvector_begin ();
   private:
     Network* network_;
     unsigned id_;

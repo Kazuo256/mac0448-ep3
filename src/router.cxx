@@ -18,5 +18,13 @@ void Router::start_up () {
   network_->local_broadcast(id_, "hello");
 }
 
+void Router::linkstate_begin () {
+  network_->local_broadcast(id_, "hello");
+}
+
+void Router::distvector_begin () {
+  network_->local_broadcast(id_, "hello");
+}
+
 } // namespace ep3
 
