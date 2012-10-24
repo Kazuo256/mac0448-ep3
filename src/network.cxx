@@ -43,5 +43,17 @@ double Network::get_delay (unsigned id_sender, unsigned id_receiver) const {
   return topology_[id_sender][id_receiver];
 }
 
+void Network::local_broadcast (unsigned id_sender, const string& msg) {
+  
+}
+
+bool Network::send (unsigned id_sender, unsigned id_receiver,
+                    const string& msg) {
+  if (topology_[id_sender][id_receiver] < 0.0)
+    return false;
+  
+  return true;
+}
+
 } // namespce ep3
 
