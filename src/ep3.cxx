@@ -13,6 +13,7 @@
 using std::vector;
 using std::string;
 using std::stringstream;
+using std::getline;
 using std::cout;
 using std::cin;
 using std::endl;
@@ -63,7 +64,9 @@ void run_prompt (const string& progname) {
     cout << progname << "$ ";
     cout.flush();
     string input;
-    cin >> input;
+    getline(cin, input);
+    stringstream line(input);
+    line >> input;
     if (input == "quit") return;
   }
   cout << endl;
