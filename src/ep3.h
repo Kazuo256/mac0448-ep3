@@ -10,7 +10,7 @@ void create_network (const std::string& topology_file);
 
 void find_routes ();
 
-void run_prompt ();
+void run_prompt (const std::string& progname);
 
 } // namespace ep3
 

@@ -6,12 +6,15 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <algorithm>
 #include <tr1/functional>
 
 using std::vector;
 using std::string;
+using std::stringstream;
 using std::cout;
+using std::cin;
 using std::endl;
 using std::for_each;
 using std::tr1::mem_fn;
@@ -54,8 +57,16 @@ void find_routes () {
   for_each(bootstraps.begin(), bootstraps.end(), simulation_step);
 }
 
-void run_prompt () {
-
+void run_prompt (const string& progname) {
+  cout << "## Inicando prompt..." << endl;
+  while (cin.good()) {
+    cout << progname << "$ ";
+    cout.flush();
+    string input;
+    cin >> input;
+    if (input == "quit") return;
+  }
+  cout << endl;
 }
 
 } // namespace ep3

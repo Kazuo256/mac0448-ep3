@@ -13,7 +13,7 @@ int main (int argc, char** argv) {
   }
   ep3::create_network(argv[1]);
   ep3::find_routes();
-  ep3::run_prompt();
+  ep3::run_prompt(argv[0]);
   return EXIT_SUCCESS;
 }
 
