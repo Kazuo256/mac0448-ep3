@@ -5,18 +5,17 @@
 #include <string>
 #include <vector>
 #include <queue>
+#include <ostream>
 
 namespace ep3 {
 
 class Network {
   public:
     struct Packet {
-      Packet (unsigned id_sender, unsigned id_receiver, const std::string& msg)
-        : id_sender_(id_sender), id_receiver_(id_receiver), msg_(msg) {}
       operator std::string () const;
-      unsigned    id_sender_,
-                  id_receiver_;
-      std::string msg_;
+      unsigned    id_sender,
+                  id_receiver;
+      std::string msg;
     };
     Network () {}
     size_t load_topology (const std::string& topology_file);
@@ -31,6 +30,8 @@ class Network {
     Topology            topology_;
     std::queue<Packet>  packets_;
 };
+
+std::ostream& operator << (std::ostream& os, const Network::Packet& packet);
 
 } // namespace ep3
 

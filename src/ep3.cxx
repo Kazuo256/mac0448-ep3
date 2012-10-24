@@ -31,7 +31,7 @@ void find_routes () {
   cout << "=== Simulando troca de mensagens ===" << endl;
   while (network.pending_msgs()) {
     Network::Packet packet = network.next_msg();
-    routers[packet.id_receiver_].receive_msg(packet.id_sender_, packet.msg_);
+    routers[packet.id_receiver].receive_msg(packet.id_sender, packet.msg);
   }
 }
 

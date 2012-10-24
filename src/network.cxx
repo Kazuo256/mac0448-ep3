@@ -10,6 +10,7 @@ using std::max;
 using std::vector;
 using std::string;
 using std::getline;
+using std::ostream;
 using std::ifstream;
 using std::stringstream;
 
@@ -54,7 +55,8 @@ void Network::send (unsigned id_sender, unsigned id_receiver,
                     const string& msg) {
   if (topology_[id_sender][id_receiver] < 0.0)
     return;
-  Packet packet(id_sender, id_receiver, msg);
+  Packet packet = { id_sender, id_receiver, msg };
+  cout << packet << endl;
   packets_.push(packet); 
 }
 
@@ -66,9 +68,14 @@ Network::Packet Network::next_msg () {
 
 Network::Packet::operator string () const {
   stringstream stream;
-  stream << "(" << id_sender_ << " -> " << id_receiver_
-         << "):" << msg_;
+  stream << "[PACKET sender=" << id_sender << " receiver=" << id_receiver
+         << " msg=\"" << msg << "\"]";
   return stream.str();
+}
+
+ostream& operator << (ostream& os, const Network::Packet& packet) {
+  os << static_cast<string>(packet);
+  return os;
 }
 
 } // namespce ep3

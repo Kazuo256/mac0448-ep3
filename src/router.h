@@ -13,7 +13,7 @@ class Router {
     Router (Network* network, unsigned id) :
       network_(network), id_(id) {}
     unsigned id () const { return id_; }
-    void receive_msg (unsigned id_sender, const std::string& packet);
+    void receive_msg (unsigned id_sender, const std::string& msg);
     void start_up ();
   private:
     Network* network_;
