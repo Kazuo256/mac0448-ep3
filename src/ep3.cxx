@@ -26,10 +26,13 @@ const static Bootstrap bootstrap_list[] = {
   &Router::distvector_begin
 };
 
+const static Bootstrap *const bootstrap_end =
+  bootstrap_list+sizeof(bootstrap_list)/sizeof(Bootstrap);
+
 static vector<Router>     routers;
 static Network            network;
 static vector<Bootstrap>  bootstraps(bootstrap_list,
-                                     bootstrap_list+sizeof(bootstrap_list));
+                                     bootstrap_end);
 
 void create_network (const std::string& topology_file) {
   size_t router_num = network.load_topology(topology_file);
@@ -38,7 +41,7 @@ void create_network (const std::string& topology_file) {
     routers.push_back(Router(&network, i));
 }
 
-void simulation_step (const Bootstrap& bootstrap_method) {
+static void simulation_step (const Bootstrap& bootstrap_method) {
   for_each(routers.begin(), routers.end(), mem_fn(bootstrap_method));
   while (network.pending_msgs()) {
     Network::Packet packet = network.next_msg();
