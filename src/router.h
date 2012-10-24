@@ -3,6 +3,7 @@
 #define EP3_ROUTER_H_
 
 #include <string>
+#include <istream>
 #include <list>
 
 namespace ep3 {
@@ -21,7 +22,7 @@ class Router {
     void linkstate_begin ();
     void distvector_begin ();
     // Métodos que tratam mensagens
-    void acknowledge_neighbor (unsigned id_sender, const std::string& msg);
+    void acknowledge_neighbor (unsigned id_sender, std::istream& msg);
   private:
     struct Neighbor {
       unsigned  id;

@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <ostream>
+#include <sstream>
 
 namespace ep3 {
 
