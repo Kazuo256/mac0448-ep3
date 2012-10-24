@@ -7,8 +7,12 @@ include_directories (src)
 set (
   EP3_SRC
   src/main.cxx
+  src/ep3.cxx
+  src/ep3.h
   src/network.cxx
+  src/network.h
   src/router.cxx
+  src/router.h
 )
 
 add_executable (ep3 ${EP3_SRC})

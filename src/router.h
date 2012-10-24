@@ -4,11 +4,15 @@
 
 namespace ep3 {
 
+class Network;
+
 class Router {
   public:
-    Router (unsigned id) : id_(id) {}
+    Router (Network* network, unsigned id) :
+      network_(network), id_(id) {}
     unsigned id () const { return id_; }
   private:
+    Network* network_;
     unsigned id_;
 };
 
