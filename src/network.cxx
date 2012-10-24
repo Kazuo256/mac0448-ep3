@@ -44,15 +44,23 @@ double Network::get_delay (unsigned id_sender, unsigned id_receiver) const {
 }
 
 void Network::local_broadcast (unsigned id_sender, const string& msg) {
-  
+  vector<double> &neighbors = topology_[id_sender];
+  for (vector<double>::iterator it = neighbors.begin();
+       it != neighbors.end(); ++it)
+    send(id_sender, it-neighbors.begin(), msg);
 }
 
-bool Network::send (unsigned id_sender, unsigned id_receiver,
+void Network::send (unsigned id_sender, unsigned id_receiver,
                     const string& msg) {
   if (topology_[id_sender][id_receiver] < 0.0)
-    return false;
-  
-  return true;
+    return;
+  packets_.push(Packet(id_sender, id_receiver, msg)); 
+}
+
+Network::Packet Network::next_msg () {
+  Packet packet = packets_.back();
+  packets_.pop();
+  return packet;
 }
 
 } // namespce ep3
