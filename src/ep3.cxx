@@ -113,25 +113,27 @@ static bool handle_command (stringstream& command) {
   if (cmd_name == "ee") method = &Router::linkstate_route;
   if (cmd_name == "vd") method = &Router::distvector_route;
   if (method) {
-    unsigned          id_origin, id_destiny;
+    unsigned id_origin, id_destiny;
     if (!check_args(command)) return true;
     command >> id_origin;
     if (!check_id(id_origin)) return true;
     if (!check_args(command)) return true;
     command >> id_destiny;
     if (!check_id(id_destiny)) return true;
-    string            metric;
-    vector<unsigned>  route;
-    command >> id_origin >> id_destiny >> metric;
-    cout  << "## Finding route..." << endl;
+    string metric;
+    if (!check_args(command)) return true;
+    command >> metric;
+    cout << "## Finding route..." << endl;
+    vector<unsigned> route;
     double total_delay = (routers[id_origin].*method) (id_destiny, route);
     for (vector<unsigned>::iterator it = route.begin(); it != route.end(); ++it)
       cout << *it << " ";
+    cout << "(";
     if (metric == "h")
-      cout << "(" << route.size() << " hops)" << endl;
+      cout << route.size() << " hops";
     else if (metric == "a")
-      cout << "(" << total_delay << " milisegundos)" << endl;
-    else cout << endl;
+      cout << total_delay << " milisegundos";
+    cout << ")" << endl;
   } else if (!cmd_name.empty())
     cout << "## Unknown comman '" << cmd_name << "'." << endl;
   return true;
