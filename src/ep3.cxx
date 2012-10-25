@@ -48,6 +48,10 @@ static vector<Bootstrap>  bootstraps(bootstrap_list,
 // bootstrap indicado.
 static void simulation_step (const Bootstrap& bootstrap_method);
 
+// Trata uma linha de comando do prompt do programa. O retorno indica se o
+// prompt deve continuar ou não. Se for falso, o prompt deve terminar.
+static bool handle_command (stringstream& command);
+
 void create_network (const std::string& topology_file) {
   size_t router_num = network.load_topology(topology_file);
   cout << "## Number of routers in the network: " << router_num << endl;
@@ -65,11 +69,10 @@ void run_prompt (const string& progname) {
   while (cin.good()) {
     cout << progname << "$ ";
     cout.flush();
-    string input;
-    getline(cin, input);
-    stringstream line(input);
-    line >> input;
-    if (input == "quit") return;
+    string line;
+    getline(cin, line);
+    stringstream command(line);
+    if (!handle_command(command)) return;
   }
   cout << endl;
 }
@@ -82,6 +85,13 @@ static void simulation_step (const Bootstrap& bootstrap_method) {
     Network::Packet packet = network.next_msg();
     routers[packet.id_receiver].receive_msg(packet.id_sender, packet.msg);
   }
+}
+
+static bool handle_command (stringstream& command) {
+  string cmd_name;
+  command >> cmd_name;
+  if (cmd_name == "quit") return false;
+  return true;
 }
 
 } // namespace ep3
