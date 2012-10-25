@@ -97,7 +97,20 @@ static bool handle_command (stringstream& command) {
   if (cmd_name == "ee") method = &Router::linkstate_route;
   if (cmd_name == "vd") method = &Router::distvector_route;
   if (method) {
-
+    unsigned          id_origin, id_destiny;
+    string            metric;
+    vector<unsigned>  route;
+    command >> id_origin >> id_destiny >> metric;
+    cout  << "## Finding route from " << id_origin << " to " << id_destiny
+          << " using the " << cmd_name << " algorithm." << endl
+          << "## The metric used will be " << metric << "." << endl;
+    double total_delay = (routers[id_origin].*method) (id_destiny, route);
+    for (vector<unsigned>::iterator it = route.begin(); it != route.end(); ++it)
+      cout << *it << " ";
+    if (metric == "h")
+      cout << "(" << route.size() << " hops)" << endl;
+    else if (metric == "a")
+      cout << "(" << total_delay << " milisegundos)" << endl;
   } else if (!cmd_name.empty())
     cout << "## Unknown comman '" << cmd_name << "'." << endl;
   return true;
