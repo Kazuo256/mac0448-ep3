@@ -87,6 +87,22 @@ static void simulation_step (const Bootstrap& bootstrap_method) {
   }
 }
 
+static bool check_id (unsigned id) {
+  if (id >= routers.size()) {
+    cout << "## No router with ID " << id << "." << endl;
+    return false;
+  }
+  return true;
+}
+
+static bool check_args (const stringstream& command) {
+  if (command.eof()) {
+    cout << "## Missing arguments." << endl;
+    return false;
+  }
+  return true;
+}
+
 typedef double (Router::*RoutingMethod) (unsigned, vector<unsigned>&) const;
 
 static bool handle_command (stringstream& command) {
@@ -98,12 +114,16 @@ static bool handle_command (stringstream& command) {
   if (cmd_name == "vd") method = &Router::distvector_route;
   if (method) {
     unsigned          id_origin, id_destiny;
+    if (!check_args(command)) return true;
+    command >> id_origin;
+    if (!check_id(id_origin)) return true;
+    if (!check_args(command)) return true;
+    command >> id_destiny;
+    if (!check_id(id_destiny)) return true;
     string            metric;
     vector<unsigned>  route;
     command >> id_origin >> id_destiny >> metric;
-    cout  << "## Finding route from " << id_origin << " to " << id_destiny
-          << " using the " << cmd_name << " algorithm." << endl
-          << "## The metric used will be " << metric << "." << endl;
+    cout  << "## Finding route..." << endl;
     double total_delay = (routers[id_origin].*method) (id_destiny, route);
     for (vector<unsigned>::iterator it = route.begin(); it != route.end(); ++it)
       cout << *it << " ";
@@ -111,6 +131,7 @@ static bool handle_command (stringstream& command) {
       cout << "(" << route.size() << " hops)" << endl;
     else if (metric == "a")
       cout << "(" << total_delay << " milisegundos)" << endl;
+    else cout << endl;
   } else if (!cmd_name.empty())
     cout << "## Unknown comman '" << cmd_name << "'." << endl;
   return true;
