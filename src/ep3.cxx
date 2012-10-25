@@ -87,10 +87,19 @@ static void simulation_step (const Bootstrap& bootstrap_method) {
   }
 }
 
+typedef double (Router::*RoutingMethod) (unsigned, vector<unsigned>&) const;
+
 static bool handle_command (stringstream& command) {
   string cmd_name;
   command >> cmd_name;
   if (cmd_name == "quit") return false;
+  RoutingMethod method = NULL;
+  if (cmd_name == "ee") method = &Router::linkstate_route;
+  if (cmd_name == "vd") method = &Router::distvector_route;
+  if (method) {
+
+  } else if (!cmd_name.empty())
+    cout << "## Unknown comman '" << cmd_name << "'." << endl;
   return true;
 }
 
