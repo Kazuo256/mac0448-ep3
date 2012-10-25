@@ -1,0 +1,16 @@
+
+=== THIS IS A STUB ===
+
+
+Algumas observações:
+
+  [+] Normalmente, quando um pacote é enviado para a rede com algum endereço de
+      destino específico, todos ao seu alcance recebem o pacote. Aquele a quem
+      se destina o pacote reconhece e trata a mensagem recebida, enquanto os
+      demais simplesmente ignoram-no. Estou abstraindo esse conceito no EP,
+      fazendo que apenas o verdadeiro destinatário, se alcançável, trate o
+      pacote que lhe é enviado. Ou seja, os demais roteadores "ignoram" o
+      pacote simplesmente porque eu não chamo o método deles de tratar
+      mensagens quando o pacote não é para eles, mesmo que ele possa chegar até
+      eles.
+
