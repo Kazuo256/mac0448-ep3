@@ -31,6 +31,8 @@ const static pair<string, MsgHandler> *const handler_end =
 const static unordered_map<string, MsgHandler> handlers(handler_list,
                                                         handler_end);
 
+// Métodos básicos.
+
 void Router::receive_msg (unsigned id_sender, const string& msg) {
   stringstream tokens(msg);
   string header;
@@ -40,11 +42,13 @@ void Router::receive_msg (unsigned id_sender, const string& msg) {
     (this->*(it->second))(id_sender, tokens);
 }
 
+// Métodos de bootstrap
+
+const static string sep = " ";
+
 void Router::start_up () {
   network_->local_broadcast(id_, "hello");
 }
-
-const static string sep = " ";
 
 void Router::linkstate_begin () {
   stringstream msg;
@@ -59,12 +63,16 @@ void Router::distvector_begin () {
   //network_->local_broadcast(id_, "hello");
 }
 
+// Métodos que tratam mensagens
+
 void Router::acknowledge_neighbor (unsigned id_sender, istream& tokens) {
   Neighbor neighbor = { id_sender, network_->get_delay(id_, id_sender) };
   neighbors_.push_back(neighbor);
   cout << "[ROUTER " << id_ << "] Acknowledges neighbor " << id_sender << "."
        << endl;
 }
+
+// Métodos que calculam rotas
 
 double Router::linkstate_route (unsigned id_target, vector<unsigned>& route) const {
   route.push_back(id_);
