@@ -5,6 +5,7 @@
 #include <string>
 #include <istream>
 #include <list>
+#include <vector>
 
 namespace ep3 {
 
@@ -23,6 +24,9 @@ class Router {
     void distvector_begin ();
     // Métodos que tratam mensagens
     void acknowledge_neighbor (unsigned id_sender, std::istream& msg);
+    // Métodos que calculam rotas
+    double linkstate_route (unsigned id_target, std::vector<unsigned>& route) const;
+    double distvector_route (unsigned id_target, std::vector<unsigned>& route) const;
   private:
     struct Neighbor {
       unsigned  id;

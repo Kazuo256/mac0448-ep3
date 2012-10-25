@@ -7,6 +7,7 @@
 #include <tr1/unordered_map>
 
 using std::list;
+using std::vector;
 using std::string;
 using std::istream;
 using std::stringstream;
@@ -63,6 +64,16 @@ void Router::acknowledge_neighbor (unsigned id_sender, istream& tokens) {
   neighbors_.push_back(neighbor);
   cout << "[ROUTER " << id_ << "] Acknowledges neighbor " << id_sender << "."
        << endl;
+}
+
+double Router::linkstate_route (unsigned id_target, vector<unsigned>& route) const {
+  route.push_back(id_);
+  return 0.0;
+}
+
+double Router::distvector_route (unsigned id_target, vector<unsigned>& route) const {
+  route.push_back(id_);
+  return 0.0;
 }
 
 } // namespace ep3
