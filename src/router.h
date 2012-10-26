@@ -8,6 +8,7 @@
 #include <vector>
 #include <queue>
 #include <tr1/unordered_map>
+#include <tr1/unordered_set>
 
 namespace ep3 {
 
@@ -41,7 +42,7 @@ class Router {
     Network*                                      network_;
     unsigned                                      id_;
     std::tr1::unordered_map<unsigned, LinkState>  linkstates_;
-    std::queue<unsigned>                          pending_linkstates_;
+    std::tr1::unordered_set<unsigned>             pending_linkstates_;
     void send_linkstate_reqs (LinkState& targets) const;
 };
 

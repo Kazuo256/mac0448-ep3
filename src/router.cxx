@@ -61,6 +61,7 @@ void Router::linkstate_begin () {
     stringstream msg;
     msg << "REQ_LINKSTATE" << sep << id_ << sep << it->id;
     network_->send(id_, it->id, msg.str());
+    pending_linkstates_.insert(it->id);
   }
 }
 
@@ -101,6 +102,7 @@ void Router::receive_linkstate (unsigned id_sender, istream& args) {
   unsigned id_origin, id_destiny;
   args >> id_origin >> id_destiny;
   if (id_destiny == id_ && linkstates_.count(id_origin) == 0) {
+    pending_linkstates_.erase(id_origin);
     LinkState neighbors;
     // Lê os vizinhos
     while (!args.eof()) {
@@ -119,10 +121,11 @@ void Router::receive_linkstate (unsigned id_sender, istream& args) {
     // Manda mais requisições para os que não conhece ainda
     for (LinkState::iterator it = neighbors.begin();
          it != neighbors.end(); ++it)
-      if (linkstates_.count(it->id) == 0) {
+      if (linkstates_.count(it->id) == 0 && pending_linkstates_.count(it->id) == 0) {
         stringstream request;
         request << "REQ_LINKSTATE" << sep << id_ << sep << it->id;
         network_->local_broadcast(id_, request.str());
+        pending_linkstates_.insert(it->id);
       }
     linkstates_[id_origin] = neighbors;
   } else {
