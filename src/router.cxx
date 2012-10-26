@@ -16,6 +16,7 @@ using std::endl;
 using std::pair;
 using std::make_pair;
 using std::tr1::unordered_map;
+using std::tr1::unordered_set;
 
 namespace ep3 {
 
@@ -58,9 +59,9 @@ void Router::linkstate_begin () {
   LinkState &neighbors = linkstates_[id_];
   for (list<Neighbor>::iterator it = neighbors.begin();
        it != neighbors.end(); ++it) {
-    stringstream msg;
-    msg << "REQ_LINKSTATE" << sep << id_ << sep << it->id;
-    network_->send(id_, it->id, msg.str());
+    stringstream request;
+    request << "REQ_LINKSTATE" << sep << id_ << sep << it->id;
+    network_->send(id_, it->id, request.str());
     pending_linkstates_.insert(it->id);
   }
 }
@@ -94,7 +95,30 @@ void Router::respond_linkstate (unsigned id_sender, istream& args) {
       answer << sep << it->id << ":" << it->delay;
     network_->send(id_, id_origin, answer.str());
   } else {
-    
+    stringstream            request;
+    unordered_set<unsigned> invalid;
+    invalid.insert(id_origin);
+    invalid.insert(id_sender);
+    request << "REQ_LINKSTATE" << sep << id_origin << sep << id_destiny;
+    cout << "[ROUTER " << id_ << "] Repassing packet from " << id_sender << endl;
+    while (!args.eof()) {
+      unsigned id;
+      args >> id;
+      invalid.insert(id);
+      request << sep << id;
+    }
+    request << sep << id_;
+    LinkState &neighbors = linkstates_[id_];
+    for (list<Neighbor>::iterator it = neighbors.begin();
+         it != neighbors.end(); ++it)
+      if (it->id == id_destiny) {
+        network_->send(id_, id_destiny, request.str());
+        return;
+      }
+    for (list<Neighbor>::iterator it = neighbors.begin();
+         it != neighbors.end(); ++it)
+      if (invalid.count(it->id) == 0)
+        network_->send(id_, it->id, request.str());
   }
 }
 
