@@ -25,9 +25,10 @@ class Router {
     void linkstate_begin ();
     void distvector_begin ();
     // Métodos que tratam mensagens
-    void acknowledge_hello (unsigned id_sender, std::istream& msg);
-    void acknowledge_neighbor (unsigned id_sender, std::istream& msg);
-    void respond_linkstate (unsigned id_sender, std::istream& msg);
+    void acknowledge_hello (unsigned id_sender, std::istream& args);
+    void acknowledge_neighbor (unsigned id_sender, std::istream& args);
+    void respond_linkstate (unsigned id_sender, std::istream& args);
+    void receive_linkstate (unsigned id_sender, std::istream& args);
     // Métodos que calculam rotas
     double linkstate_route (unsigned id_target, std::vector<unsigned>& route) const;
     double distvector_route (unsigned id_target, std::vector<unsigned>& route) const;
@@ -41,6 +42,7 @@ class Router {
     unsigned                                      id_;
     std::tr1::unordered_map<unsigned, LinkState>  linkstates_;
     std::queue<unsigned>                          pending_linkstates_;
+    void send_linkstate_reqs (LinkState& targets) const;
 };
 
 } // namespace ep3

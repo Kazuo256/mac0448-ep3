@@ -25,6 +25,7 @@ const static pair<string, MsgHandler> handler_list[] = {
   make_pair("HELLO", &Router::acknowledge_hello),
   make_pair("ACK_HELLO", &Router::acknowledge_neighbor),
   make_pair("REQ_LINKSTATE", &Router::respond_linkstate),
+  make_pair("ANSWER_LINKSTATE", &Router::receive_linkstate),
 };
 
 const static pair<string, MsgHandler> *const handler_end =
@@ -61,13 +62,6 @@ void Router::linkstate_begin () {
     msg << "REQ_LINKSTATE" << sep << id_ << sep << it->id;
     network_->send(id_, it->id, msg.str());
   }
-  //---
-  //stringstream msg;
-  //msg << "REQ_LINKSTATE" << sep << id_;
-  //for (list<Neighbor>::iterator it = linkstates_[id_].begin();
-  //     it != linkstates_[id_].end(); ++it)
-  //  msg << sep << it->id << ":" << it->delay;
-  //network_->local_broadcast(id_, msg.str());
 }
 
 void Router::distvector_begin () {
@@ -76,19 +70,64 @@ void Router::distvector_begin () {
 
 // Métodos que tratam mensagens
 
-void Router::acknowledge_hello (unsigned id_sender, istream& tokens) {
+void Router::acknowledge_hello (unsigned id_sender, istream& args) {
   network_->send(id_, id_sender, "ACK_HELLO");
 }
 
-void Router::acknowledge_neighbor (unsigned id_sender, istream& tokens) {
+void Router::acknowledge_neighbor (unsigned id_sender, istream& args) {
   Neighbor neighbor = { id_sender, network_->get_delay(id_, id_sender) };
   linkstates_[id_].push_back(neighbor);
   cout << "[ROUTER " << id_ << "] Acknowledges neighbor " << id_sender << "."
        << endl;
 }
 
-void Router::respond_linkstate (unsigned id_sender, istream& tokens) {
+void Router::respond_linkstate (unsigned id_sender, istream& args) {
+  unsigned id_origin, id_destiny;
+  args >> id_origin >> id_destiny;
+  if (id_destiny == id_) {
+    stringstream answer;
+    answer << "ANSWER_LINKSTATE" << sep << id_ << sep << id_origin;
+    LinkState &neighbors = linkstates_[id_];
+    for (list<Neighbor>::iterator it = neighbors.begin();
+         it != neighbors.end(); ++it)
+      answer << sep << it->id << ":" << it->delay;
+    network_->send(id_, id_origin, answer.str());
+  } else {
+    
+  }
+}
 
+void Router::receive_linkstate (unsigned id_sender, istream& args) {
+  unsigned id_origin, id_destiny;
+  args >> id_origin >> id_destiny;
+  if (id_destiny == id_ && linkstates_.count(id_origin) == 0) {
+    LinkState neighbors;
+    // Lê os vizinhos
+    while (!args.eof()) {
+      string neighbor_data;
+      args >> neighbor_data;
+      size_t    div = neighbor_data.find(":");
+      unsigned  id;
+      double    delay;
+      stringstream(neighbor_data.substr(0,div)) >> id;
+      stringstream(neighbor_data.substr(div+1)) >> delay;
+      cout  << "[ROUTER " << id_ << "] Received linkstate from " << id_origin
+            << ": neighbor " << id << " delay " << delay << endl;
+      Neighbor neighbor = { id, delay };
+      neighbors.push_back(neighbor);
+    }
+    // Manda mais requisições para os que não conhece ainda
+    for (LinkState::iterator it = neighbors.begin();
+         it != neighbors.end(); ++it)
+      if (linkstates_.count(it->id) == 0) {
+        stringstream request;
+        request << "REQ_LINKSTATE" << sep << id_ << sep << it->id;
+        network_->local_broadcast(id_, request.str());
+      }
+    linkstates_[id_origin] = neighbors;
+  } else {
+    
+  }
 }
 
 // Métodos que calculam rotas
