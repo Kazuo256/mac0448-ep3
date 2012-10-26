@@ -22,7 +22,8 @@ namespace ep3 {
 typedef void (Router::*MsgHandler) (unsigned, istream&);
 
 const static pair<string, MsgHandler> handler_list[] = {
-  make_pair("hello", &Router::acknowledge_neighbor),
+  make_pair("HELLO", &Router::acknowledge_hello),
+  make_pair("ACK_HELLO", &Router::acknowledge_neighbor),
 };
 
 const static pair<string, MsgHandler> *const handler_end =
@@ -47,7 +48,7 @@ void Router::receive_msg (unsigned id_sender, const string& msg) {
 const static string sep = " ";
 
 void Router::start_up () {
-  network_->local_broadcast(id_, "hello");
+  network_->local_broadcast(id_, "HELLO");
 }
 
 void Router::linkstate_begin () {
@@ -60,10 +61,14 @@ void Router::linkstate_begin () {
 }
 
 void Router::distvector_begin () {
-  //network_->local_broadcast(id_, "hello");
+  //network_->local_broadcast(id_, "HELLO");
 }
 
 // Métodos que tratam mensagens
+
+void Router::acknowledge_hello (unsigned id_sender, istream& tokens) {
+  network_->send(id_, id_sender, "ACK_HELLO");
+}
 
 void Router::acknowledge_neighbor (unsigned id_sender, istream& tokens) {
   Neighbor neighbor = { id_sender, network_->get_delay(id_, id_sender) };
