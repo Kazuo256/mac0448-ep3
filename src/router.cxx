@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <utility>
+#include <stack>
 #include <tr1/unordered_map>
 
 using std::list;
@@ -17,6 +18,7 @@ using std::pair;
 using std::make_pair;
 using std::tr1::unordered_map;
 using std::tr1::unordered_set;
+using std::stack;
 
 namespace ep3 {
 
@@ -89,11 +91,26 @@ void Router::respond_linkstate (unsigned id_sender, istream& args) {
   if (id_destiny == id_) {
     stringstream answer;
     answer << "ANSWER_LINKSTATE" << sep << id_ << sep << id_origin;
+    stack<unsigned> path;
+    path.push(id_origin);
+    while (!args.eof()) {
+      unsigned id;
+      args >> id;
+      path.push(id);
+    }
+    unsigned next = path.top();
+    path.pop();
+    while (path.size() > 1) {
+      answer << sep << path.top();
+      path.pop();
+    }
+    if (!path.empty())
+      answer << sep << "|";
     LinkState &neighbors = linkstates_[id_];
     for (list<Neighbor>::iterator it = neighbors.begin();
          it != neighbors.end(); ++it)
       answer << sep << it->id << ":" << it->delay;
-    network_->send(id_, id_origin, answer.str());
+    network_->send(id_, next, answer.str());
   } else {
     stringstream            request;
     unordered_set<unsigned> invalid;
