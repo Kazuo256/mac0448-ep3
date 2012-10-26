@@ -48,14 +48,15 @@ void Router::receive_msg (unsigned id_sender, const string& msg) {
 const static string sep = " ";
 
 void Router::start_up () {
+  linkstates_[id_] = LinkState();
   network_->local_broadcast(id_, "HELLO");
 }
 
 void Router::linkstate_begin () {
   stringstream msg;
   msg << "linkstate" << sep << id_;
-  for (list<Neighbor>::iterator it = neighbors_.begin();
-       it != neighbors_.end(); ++it)
+  for (list<Neighbor>::iterator it = linkstates_[id_].begin();
+       it != linkstates_[id_].end(); ++it)
     msg << sep << it->id << ":" << it->delay;
   network_->local_broadcast(id_, msg.str());
 }
@@ -72,7 +73,7 @@ void Router::acknowledge_hello (unsigned id_sender, istream& tokens) {
 
 void Router::acknowledge_neighbor (unsigned id_sender, istream& tokens) {
   Neighbor neighbor = { id_sender, network_->get_delay(id_, id_sender) };
-  neighbors_.push_back(neighbor);
+  linkstates_[id_].push_back(neighbor);
   cout << "[ROUTER " << id_ << "] Acknowledges neighbor " << id_sender << "."
        << endl;
 }

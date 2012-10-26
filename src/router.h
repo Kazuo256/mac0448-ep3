@@ -6,6 +6,7 @@
 #include <istream>
 #include <list>
 #include <vector>
+#include <tr1/unordered_map>
 
 namespace ep3 {
 
@@ -33,9 +34,10 @@ class Router {
       unsigned  id;
       double    delay;
     };
-    Network*            network_;
-    unsigned            id_;
-    std::list<Neighbor> neighbors_;
+    typedef std::list<Neighbor> LinkState;
+    Network*                                      network_;
+    unsigned                                      id_;
+    std::tr1::unordered_map<unsigned, LinkState>  linkstates_;
 };
 
 } // namespace ep3
