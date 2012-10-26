@@ -24,6 +24,7 @@ typedef void (Router::*MsgHandler) (unsigned, istream&);
 const static pair<string, MsgHandler> handler_list[] = {
   make_pair("HELLO", &Router::acknowledge_hello),
   make_pair("ACK_HELLO", &Router::acknowledge_neighbor),
+  make_pair("REQ_LINKSTATE", &Router::respond_linkstate),
 };
 
 const static pair<string, MsgHandler> *const handler_end =
@@ -53,12 +54,20 @@ void Router::start_up () {
 }
 
 void Router::linkstate_begin () {
-  stringstream msg;
-  msg << "linkstate" << sep << id_;
-  for (list<Neighbor>::iterator it = linkstates_[id_].begin();
-       it != linkstates_[id_].end(); ++it)
-    msg << sep << it->id << ":" << it->delay;
-  network_->local_broadcast(id_, msg.str());
+  LinkState &neighbors = linkstates_[id_];
+  for (list<Neighbor>::iterator it = neighbors.begin();
+       it != neighbors.end(); ++it) {
+    stringstream msg;
+    msg << "REQ_LINKSTATE" << sep << id_ << sep << it->id;
+    network_->send(id_, it->id, msg.str());
+  }
+  //---
+  //stringstream msg;
+  //msg << "REQ_LINKSTATE" << sep << id_;
+  //for (list<Neighbor>::iterator it = linkstates_[id_].begin();
+  //     it != linkstates_[id_].end(); ++it)
+  //  msg << sep << it->id << ":" << it->delay;
+  //network_->local_broadcast(id_, msg.str());
 }
 
 void Router::distvector_begin () {
@@ -76,6 +85,10 @@ void Router::acknowledge_neighbor (unsigned id_sender, istream& tokens) {
   linkstates_[id_].push_back(neighbor);
   cout << "[ROUTER " << id_ << "] Acknowledges neighbor " << id_sender << "."
        << endl;
+}
+
+void Router::respond_linkstate (unsigned id_sender, istream& tokens) {
+
 }
 
 // Métodos que calculam rotas

@@ -6,6 +6,7 @@
 #include <istream>
 #include <list>
 #include <vector>
+#include <queue>
 #include <tr1/unordered_map>
 
 namespace ep3 {
@@ -26,6 +27,7 @@ class Router {
     // Métodos que tratam mensagens
     void acknowledge_hello (unsigned id_sender, std::istream& msg);
     void acknowledge_neighbor (unsigned id_sender, std::istream& msg);
+    void respond_linkstate (unsigned id_sender, std::istream& msg);
     // Métodos que calculam rotas
     double linkstate_route (unsigned id_target, std::vector<unsigned>& route) const;
     double distvector_route (unsigned id_target, std::vector<unsigned>& route) const;
@@ -38,6 +40,7 @@ class Router {
     Network*                                      network_;
     unsigned                                      id_;
     std::tr1::unordered_map<unsigned, LinkState>  linkstates_;
+    std::queue<unsigned>                          pending_linkstates_;
 };
 
 } // namespace ep3
