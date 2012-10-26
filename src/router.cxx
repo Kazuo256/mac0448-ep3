@@ -210,5 +210,19 @@ double Router::distvector_route (unsigned id_target, vector<unsigned>& route) co
   return 0.0;
 }
 
+// Informações de debug
+
+void Router::dump_linkstate_table () const {
+  typedef unordered_map<unsigned, LinkState>::const_iterator iterator;
+  cout << "[ROUTER " << id_ << "] Reporting link state table:" << endl;
+  for (iterator it = linkstates_.begin(); it != linkstates_.end(); ++it) {
+    cout << "(" << it->first << ")";
+    for (LinkState::const_iterator nt = it->second.begin();
+         nt != it->second.end(); ++nt)
+      cout << sep << nt->id << ":" << nt->delay;
+    cout << endl;
+  }
+}
+
 } // namespace ep3
 

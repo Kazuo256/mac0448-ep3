@@ -3,7 +3,7 @@
 #define EP3_ROUTER_H_
 
 #include <string>
-#include <istream>
+#include <sstream>
 #include <list>
 #include <vector>
 #include <queue>
@@ -33,6 +33,8 @@ class Router {
     // Métodos que calculam rotas
     double linkstate_route (unsigned id_target, std::vector<unsigned>& route) const;
     double distvector_route (unsigned id_target, std::vector<unsigned>& route) const;
+    // Informações de debug
+    void dump_linkstate_table () const;
   private:
     struct Neighbor {
       unsigned  id;
