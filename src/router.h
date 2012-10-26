@@ -26,10 +26,10 @@ class Router {
     void linkstate_begin ();
     void distvector_begin ();
     // Métodos que tratam mensagens
-    void acknowledge_hello (unsigned id_sender, std::istream& args);
-    void acknowledge_neighbor (unsigned id_sender, std::istream& args);
-    void respond_linkstate (unsigned id_sender, std::istream& args);
-    void receive_linkstate (unsigned id_sender, std::istream& args);
+    void acknowledge_hello (unsigned id_sender, std::stringstream& args);
+    void acknowledge_neighbor (unsigned id_sender, std::stringstream& args);
+    void respond_linkstate (unsigned id_sender, std::stringstream& args);
+    void receive_linkstate (unsigned id_sender, std::stringstream& args);
     // Métodos que calculam rotas
     double linkstate_route (unsigned id_target, std::vector<unsigned>& route) const;
     double distvector_route (unsigned id_target, std::vector<unsigned>& route) const;

@@ -10,7 +10,6 @@
 using std::list;
 using std::vector;
 using std::string;
-using std::istream;
 using std::stringstream;
 using std::cout;
 using std::endl;
@@ -22,7 +21,7 @@ using std::stack;
 
 namespace ep3 {
 
-typedef void (Router::*MsgHandler) (unsigned, istream&);
+typedef void (Router::*MsgHandler) (unsigned, stringstream&);
 
 const static pair<string, MsgHandler> handler_list[] = {
   make_pair("HELLO", &Router::acknowledge_hello),
@@ -74,18 +73,18 @@ void Router::distvector_begin () {
 
 // Métodos que tratam mensagens
 
-void Router::acknowledge_hello (unsigned id_sender, istream& args) {
+void Router::acknowledge_hello (unsigned id_sender, stringstream& args) {
   network_->send(id_, id_sender, "ACK_HELLO");
 }
 
-void Router::acknowledge_neighbor (unsigned id_sender, istream& args) {
+void Router::acknowledge_neighbor (unsigned id_sender, stringstream& args) {
   Neighbor neighbor = { id_sender, network_->get_delay(id_, id_sender) };
   linkstates_[id_].push_back(neighbor);
   cout << "[ROUTER " << id_ << "] Acknowledges neighbor " << id_sender << "."
        << endl;
 }
 
-void Router::respond_linkstate (unsigned id_sender, istream& args) {
+void Router::respond_linkstate (unsigned id_sender, stringstream& args) {
   unsigned id_origin, id_destiny;
   args >> id_origin >> id_destiny;
   if (id_destiny == id_) {
@@ -139,10 +138,15 @@ void Router::respond_linkstate (unsigned id_sender, istream& args) {
   }
 }
 
-void Router::receive_linkstate (unsigned id_sender, istream& args) {
+void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
   unsigned id_origin, id_destiny;
   args >> id_origin >> id_destiny;
-  if (id_destiny == id_ && linkstates_.count(id_origin) == 0) {
+  if (id_destiny == id_) {
+    if (linkstates_.count(id_origin) > 0) {
+      cout  << "[ROUTER " << id_ << "] Ignoring linkstate answer from "
+            << id_origin << endl;
+      return;
+    }
     pending_linkstates_.erase(id_origin);
     LinkState neighbors;
     // Lê os vizinhos
@@ -170,7 +174,27 @@ void Router::receive_linkstate (unsigned id_sender, istream& args) {
       }
     linkstates_[id_origin] = neighbors;
   } else {
-    
+    cout  << "[ROUTER " << id_ << "] Repassing answer from " << id_origin
+          << " to " << id_destiny << endl;
+    stringstream  answer;
+    string        token;
+    unsigned      next;
+    args >> token;
+    answer << "ANSWER_LINKSTATE" << sep << id_origin << sep << id_destiny;
+    if (token == "|")
+      next = id_destiny;
+    else {
+      stringstream(token) >> next;
+      while (token != "|") {
+        args >> token;
+        answer << sep << token;
+      }
+    }
+    while (args.good()) {
+      args >> token;
+      answer << sep << token;
+    }
+    network_->send(id_, next, answer.str());
   }
 }
 
