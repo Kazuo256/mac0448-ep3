@@ -43,7 +43,8 @@ const static pair<string, MsgHandler> *const handler_end =
 const static unordered_map<string, MsgHandler> handlers(handler_list,
                                                         handler_end);
 
-#define INFINITO 100
+#define INFINITO_UNSIGNED numeric_limits<unsigned>::max()
+#define INFINITO_DOUBLE numeric_limits<double>::max()
 
 // Métodos básicos.
 
@@ -274,10 +275,10 @@ double Router::delay (unsigned origin, unsigned destiny) {
 
 double Router::linkstate_route_ms (unsigned id_target, vector<unsigned>& route) {
   if (ls_route_ms_.empty() && ls_cost_ms_.empty()) {
-    ls_route_ms_.resize(linkstates_.size(), INFINITO);
-    ls_cost_ms_.resize(linkstates_.size(), INFINITO);
+    ls_route_ms_.resize(linkstates_.size(), INFINITO_UNSIGNED);
+    ls_cost_ms_.resize(linkstates_.size(), INFINITO_DOUBLE);
   }
-  if (ls_route_ms_[id_target] == INFINITO) {
+  if (ls_route_ms_[id_target] == INFINITO_UNSIGNED) {
     std::priority_queue<unsigned, vector<unsigned>, std::tr1::function<bool (unsigned, unsigned)> > 
         PQ(bind(&Router::comp_ms, this, _1, _2));
     ls_cost_ms_[id_] = 0.0;
@@ -289,7 +290,7 @@ double Router::linkstate_route_ms (unsigned id_target, vector<unsigned>& route) 
       LinkState& link_n = linkstates_[n];
       for (std::list<Router::Neighbor>::iterator it = link_n.begin(); it != link_n.end(); ++it) {
         double cost = delay(n, it->id);
-        if (ls_cost_ms_[it->id] == INFINITO) {
+        if (ls_cost_ms_[it->id] == INFINITO_DOUBLE) {
           ls_cost_ms_[it->id] = ls_cost_ms_[n] + cost;
           ls_route_ms_[it->id] = n;
           PQ.push(it->id);
@@ -316,10 +317,10 @@ double Router::linkstate_route_ms (unsigned id_target, vector<unsigned>& route) 
 
 double Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route) {
   if (ls_route_hop_.empty() && ls_cost_hop_.empty()) {
-    ls_route_hop_.resize(linkstates_.size(), INFINITO);
-    ls_cost_hop_.resize(linkstates_.size(), INFINITO);
+    ls_route_hop_.resize(linkstates_.size(), INFINITO_UNSIGNED);
+    ls_cost_hop_.resize(linkstates_.size(), INFINITO_DOUBLE);
   }
-  if (ls_route_hop_[id_target] == INFINITO) {
+  if (ls_route_hop_[id_target] == INFINITO_UNSIGNED) {
     std::priority_queue<unsigned, vector<unsigned>, std::tr1::function<bool (unsigned, unsigned)> > 
         PQ(bind(&Router::comp_hop, this, _1, _2));
     ls_cost_hop_[id_] = 0.0;
@@ -330,7 +331,7 @@ double Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route)
       PQ.pop();
       LinkState& link_n = linkstates_[n];
       for (std::list<Router::Neighbor>::iterator it = link_n.begin(); it != link_n.end(); ++it) {
-        if (ls_cost_hop_[it->id] == INFINITO) {
+        if (ls_cost_hop_[it->id] == INFINITO_DOUBLE) {
           ls_cost_hop_[it->id] = ls_cost_hop_[n] + 1;
           ls_route_hop_[it->id] = n;
           PQ.push(it->id);
