@@ -354,7 +354,12 @@ double Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route)
   return ls_cost_hop_[id_target];
 }
 
-double Router::distvector_route (unsigned id_target, vector<unsigned>& route) {
+double Router::distvector_route_ms (unsigned id_target, vector<unsigned>& route) {
+  route.push_back(id_);
+  return 0.0;
+}
+
+double Router::distvector_route_hop (unsigned id_target, vector<unsigned>& route) {
   route.push_back(id_);
   return 0.0;
 }
