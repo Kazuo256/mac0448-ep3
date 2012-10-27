@@ -114,7 +114,7 @@ static bool handle_command (stringstream& command) {
   if (cmd_name == "quit") return false; // Interrompe o prompt
   // Detecta qual algoritmo de roteamento solicitado
   RoutingMethod method = NULL;
-  if (cmd_name == "ee") method = &Router::linkstate_route;
+  if (cmd_name == "ee") method = &Router::linkstate_route_ms;
   if (cmd_name == "vd") method = &Router::distvector_route;
   if (method) {
     // Sabendo o algoritmo, processamos os argumentos

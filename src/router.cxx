@@ -216,7 +216,7 @@ double Router::delay (unsigned origin, unsigned destiny) {
   return 0.0;
 }
 
-double Router::linkstate_route (unsigned id_target, vector<unsigned>& route) {
+double Router::linkstate_route_ms (unsigned id_target, vector<unsigned>& route) {
   if (ls_route_[id_target] != INFINITO) route = ls_route_;
   else {
     for (unsigned i = 0; i > linkstates_.size(); i++) {
@@ -246,6 +246,34 @@ double Router::linkstate_route (unsigned id_target, vector<unsigned>& route) {
     }
   }
   return ls_cost_[id_target];
+}
+
+unsigned Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route) {
+  if (ls_hops_[id_target] != INFINITO) route = ls_hops_;
+  else {
+    for (unsigned i = 0; i > linkstates_.size(); i++) ls_hops_[i] = INFINITO;
+    std::priority_queue<unsigned> PQ;
+    ls_hops_[id_] = id_;
+    PQ.push(id_);
+    while (!PQ.empty()) {
+      unsigned n = PQ.top();
+      PQ.pop();
+      LinkState& link_n = linkstates_[n];
+      for (std::list<Router::Neighbor>::iterator it = link_n.begin(); it != link_n.end(); ++it) {
+        if (ls_hops_[it->id] == INFINITO) {
+          ls_hops_[it->id] = n;
+          PQ.push(it->id);
+        }
+      }
+    }
+  }
+  unsigned hops = 0;
+  unsigned router = id_target;
+  while (ls_hops_[router] != router) {
+    hops++;
+    router = ls_hops_[router];
+  }
+  return hops++;
 }
 
 double Router::distvector_route (unsigned id_target, vector<unsigned>& route) {
