@@ -314,5 +314,11 @@ void Router::dump_linkstate_table () const {
   }
 }
 
+// Métodos privados
+
+void Router::send_distvector () const {
+  
+}
+
 } // namespace ep3
 
