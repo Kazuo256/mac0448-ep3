@@ -3,10 +3,12 @@
 #include "network.h"
 
 #include <utility>
+#include <limits>
 #include <stack>
 #include <tr1/functional>  
 #include <tr1/unordered_map>
 
+using std::numeric_limits;
 using std::list;
 using std::vector;
 using std::string;
@@ -32,6 +34,7 @@ const static pair<string, MsgHandler> handler_list[] = {
   make_pair("ACK_HELLO", &Router::acknowledge_neighbor),
   make_pair("REQ_LINKSTATE", &Router::respond_linkstate),
   make_pair("ANSWER_LINKSTATE", &Router::receive_linkstate),
+  make_pair("DISTVECTOR", &Router::receive_distvector),
 };
 
 const static pair<string, MsgHandler> *const handler_end =
@@ -59,6 +62,7 @@ const static string sep = " ";
 
 void Router::start_up () {
   linkstates_[id_] = LinkState();
+  distvectors_[id_] = DistVector();
   network_->local_broadcast(id_, "HELLO");
 }
 
@@ -74,7 +78,7 @@ void Router::linkstate_begin () {
 }
 
 void Router::distvector_begin () {
-  //network_->local_broadcast(id_, "HELLO");
+  send_distvector();
 }
 
 // Métodos que tratam mensagens
@@ -84,8 +88,11 @@ void Router::acknowledge_hello (unsigned id_sender, stringstream& args) {
 }
 
 void Router::acknowledge_neighbor (unsigned id_sender, stringstream& args) {
-  Neighbor neighbor = { id_sender, network_->get_delay(id_, id_sender) };
+  Neighbor  neighbor = { id_sender, network_->get_delay(id_, id_sender) };
+  Dist      distvector = { neighbor.delay, 1 };
+  neighbors_[id_sender] = neighbor.delay;
   linkstates_[id_].push_back(neighbor);
+  distvectors_[id_][id_sender] = distvector;
   output() << "Acknowledges neighbor " << id_sender << "." << endl;
 }
 
@@ -204,6 +211,49 @@ void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
   }
 }
 
+void Router::receive_distvector (unsigned id_sender, stringstream& args) {
+  output() << "Received distance vector from " << id_sender << endl;
+  DistVector& updated = distvectors_[id_sender];
+  while (!args.eof()) {
+    string token;
+    args >> token;
+    unsigned  id;
+    size_t    div1 = token.find(':', 0),
+              div2 = token.find(':', div1+1),
+              hops;
+    double    delay;
+    stringstream(token.substr(0, div1)) >> id;
+    stringstream(token.substr(div1+1, div2-div1)) >> delay;
+    stringstream(token.substr(div2+1)) >> hops;
+    Dist dist = { delay, hops };
+    updated[id] = dist;
+  }
+  bool changed = false;
+  DistVector& dists = distvectors_[id_];
+  for (DistVector::iterator it = updated.begin(); it != updated.end(); ++it)
+    if (it->first != id_) {
+      // TODO
+      Dist new_dist = {
+        neighbors_[id_sender] + it->second.delay,
+        1 + it->second.hops
+      };
+      DistVector::iterator dist = dists.find(it->first);
+      if (dist == dists.end())
+        dists[it->first] = new_dist,
+        changed = true;
+      else {
+        if (dist->second.delay > new_dist.delay)
+          dist->second.delay = new_dist.delay,
+          changed = true;
+        if (dist->second.hops > new_dist.hops)
+          dist->second.hops = new_dist.hops,
+          changed = true;
+      }
+    }
+  if (changed)
+    send_distvector();
+}
+
 // Métodos que calculam rotas
 bool Router::comp_ms (unsigned id_1, unsigned id_2) const {
   return ls_cost_ms_[id_1] > ls_cost_ms_[id_2];
@@ -316,8 +366,16 @@ void Router::dump_linkstate_table () const {
 
 // Métodos privados
 
-void Router::send_distvector () const {
-  
+void Router::send_distvector () {
+  stringstream msg;
+  msg << "DISTVECTOR";
+  DistVector& neighbors = distvectors_[id_];
+  for (DistVector::const_iterator it = neighbors.begin();
+       it != neighbors.end(); ++it)
+    msg << sep << it->first
+        << ":" << it->second.delay
+        << ":" << it->second.hops;
+  network_->local_broadcast(id_, msg.str());
 }
 
 } // namespace ep3

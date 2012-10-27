@@ -31,6 +31,7 @@ class Router {
     void acknowledge_neighbor (unsigned id_sender, std::stringstream& args);
     void respond_linkstate (unsigned id_sender, std::stringstream& args);
     void receive_linkstate (unsigned id_sender, std::stringstream& args);
+    void receive_distvector (unsigned id_sender, std::stringstream& args);
     // Métodos que calculam rotas
     double linkstate_route_ms (unsigned id_target, std::vector<unsigned>& route);
     double linkstate_route_hop (unsigned id_target, std::vector<unsigned>& route);
@@ -43,6 +44,7 @@ class Router {
   private:
     Network*                                      network_;
     unsigned                                      id_;
+    std::tr1::unordered_map<unsigned, double>     neighbors_;
     // Informações de estado de enlace
     struct Neighbor {
       unsigned  id;
@@ -57,14 +59,13 @@ class Router {
     std::vector<double>                           ls_cost_hop_;
     // Informações de vetor de distância
     struct Dist {
-      unsigned  id;
       double    delay;
       size_t    hops;
     };
-    typedef std::list<Dist> DistVector;
+    typedef std::tr1::unordered_map<unsigned, Dist> DistVector;
     std::tr1::unordered_map<unsigned, DistVector> distvectors_;
     // Envia o vetor de distâncias para todos os vizinhos.
-    void send_distvector () const;
+    void send_distvector ();
     // Método para formatar a saída do roteador.
     std::ostream& output () const {
       return std::cout << "[ROUTER " << id_ << "] ";
