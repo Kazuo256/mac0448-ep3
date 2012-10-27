@@ -232,7 +232,6 @@ void Router::receive_distvector (unsigned id_sender, stringstream& args) {
   DistVector& dists = distvectors_[id_];
   for (DistVector::iterator it = updated.begin(); it != updated.end(); ++it)
     if (it->first != id_) {
-      // TODO
       Dist new_dist = {
         neighbors_[id_sender] + it->second.delay,
         1 + it->second.hops
