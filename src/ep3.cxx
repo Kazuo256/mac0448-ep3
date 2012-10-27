@@ -73,6 +73,7 @@ void run_prompt (const string& progname) {
     string line;
     getline(cin, line);
     stringstream command(line);
+    if (line.empty()) continue;
     if (!handle_command(command)) return;
   }
   cout << endl;
@@ -96,9 +97,9 @@ static bool check_id (unsigned id) {
   return true;
 }
 
-static bool check_args (const stringstream& command) {
+static bool check_args (const stringstream& command, int n) {
   if (command.eof()) {
-    cout << "## Missing arguments." << endl;
+    cout << "## Missing arguments." << n << endl;
     return false;
   }
   return true;
@@ -117,15 +118,15 @@ static bool handle_command (stringstream& command) {
   // Sabendo o algoritmo, processamos os argumentos
   // Primeiro vem os IDs de origem e destino
   unsigned id_origin, id_destiny;
-  if (!check_args(command)) return true;
+  if (!check_args(command,1)) return true;
   command >> id_origin;
   if (!check_id(id_origin)) return true;
-  if (!check_args(command)) return true;
+  if (!check_args(command,2)) return true;
   command >> id_destiny;
   if (!check_id(id_destiny)) return true;
   // Depois a métrica desejada
   string metric;
-  if (!check_args(command)) return true;
+  if (!check_args(command,3)) return true;
   command >> metric;
   // Enfim fazemos o roteador calcular a rota
   if (cmd_name == "ee") {
