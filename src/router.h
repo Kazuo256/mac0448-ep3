@@ -17,10 +17,6 @@ class Network;
 
 class Router {
   public:
-    struct Neighbor {
-      unsigned  id;
-      double    delay;
-    };
     Router (Network* network, unsigned id) :
       network_(network), id_(id) {}
     // Métodos básicos.
@@ -40,8 +36,13 @@ class Router {
     double distvector_route (unsigned id_target, std::vector<unsigned>& route);
     // Informações de debug
     void dump_linkstate_table () const;
-    bool operator < (const Neighbor& rhs) const;
+    double delay (unsigned origin, unsigned destiny);
+    bool comp (unsigned id_1, unsigned id_2) const;
   private:
+    struct Neighbor {
+      unsigned  id;
+      double    delay;
+    };
     typedef std::list<Neighbor> LinkState;
     Network*                                      network_;
     unsigned                                      id_;

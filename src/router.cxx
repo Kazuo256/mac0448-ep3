@@ -4,6 +4,7 @@
 
 #include <utility>
 #include <stack>
+#include <tr1/functional>  
 #include <tr1/unordered_map>
 
 using std::list;
@@ -16,7 +17,11 @@ using std::pair;
 using std::make_pair;
 using std::tr1::unordered_map;
 using std::tr1::unordered_set;
+using std::tr1::function;
+using std::tr1::bind;
+using namespace std::tr1::placeholders;
 using std::stack;
+
 
 namespace ep3 {
 
@@ -200,8 +205,15 @@ void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
 }
 
 // Métodos que calculam rotas
-bool Router::operator < (const Router& rhs) const {
-  return ls_router_[id_] < ls_router_[rhs.id_];
+bool Router::comp (unsigned id_1, unsigned id_2) const {
+  return ls_cost_[id_1] < ls_cost_[id_2];
+}
+
+double Router::delay (unsigned origin, unsigned destiny) {
+  LinkState& link_origin = linkstates_[origin];
+  for (std::list<Router::Neighbor>::iterator it = link_origin.begin(); it != link_origin.end(); ++it)
+    if (it->id == destiny && it->delay >= 0.0) return it->delay;
+  return 0.0;
 }
 
 double Router::linkstate_route (unsigned id_target, vector<unsigned>& route) {
@@ -211,20 +223,24 @@ double Router::linkstate_route (unsigned id_target, vector<unsigned>& route) {
       ls_cost_[i] = INFINITO;
       route[i] = INFINITO;
     } 
-    std::priority_queue<int> PQ;
+    
+    std::priority_queue<unsigned, vector<unsigned>, std::tr1::function<bool (unsigned, unsigned)> > 
+        PQ(bind(&Router::comp, this, _1, _2));
     ls_cost_[id_] = 0.0;
     route[id_] = id_;
+    PQ.push(id_);
     while (!PQ.empty()) {
-      Neighbor n = PQ.top();
+      unsigned n = PQ.top();
       PQ.pop();
-      for (iterator it = linkstates_[n.id].begin(); it != linkstates_[n.id].end(); ++it) {
-        if (ls_cost_[it.id] == INFINITO) {
-          ls_cost_[it.id] = ls_cost_[n.id] + it.delay;
-          route[it.id] = n.id;
-          PQ.push(it);
-        } else if (ls_cost_[it.id] > ls_cost_[n.id] + n.delay) {
-          ls_cost_[it.id] = ls_cost_[n.id] + it.delay;
-          route[it.id] = n.id;
+      LinkState& link_n = linkstates_[n];
+      for (std::list<Router::Neighbor>::iterator it = link_n.begin(); it != link_n.end(); ++it) {
+        if (ls_cost_[it->id] == INFINITO) {
+          ls_cost_[it->id] = ls_cost_[n] + it->delay;
+          route[it->id] = n;
+          PQ.push(it->id);
+        } else if (ls_cost_[it->id] > ls_cost_[n] + delay(n, it->id)) {
+          ls_cost_[it->id] = ls_cost_[n] + it->delay;
+          route[it->id] = n;
         }
       }
     }
