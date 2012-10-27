@@ -2,7 +2,6 @@
 #include "router.h"
 #include "network.h"
 
-#include <iostream>
 #include <utility>
 #include <stack>
 #include <tr1/unordered_map>
@@ -80,8 +79,7 @@ void Router::acknowledge_hello (unsigned id_sender, stringstream& args) {
 void Router::acknowledge_neighbor (unsigned id_sender, stringstream& args) {
   Neighbor neighbor = { id_sender, network_->get_delay(id_, id_sender) };
   linkstates_[id_].push_back(neighbor);
-  cout << "[ROUTER " << id_ << "] Acknowledges neighbor " << id_sender << "."
-       << endl;
+  output() << "Acknowledges neighbor " << id_sender << "." << endl;
 }
 
 void Router::respond_linkstate (unsigned id_sender, stringstream& args) {
@@ -116,7 +114,7 @@ void Router::respond_linkstate (unsigned id_sender, stringstream& args) {
     invalid.insert(id_origin);
     invalid.insert(id_sender);
     request << "REQ_LINKSTATE" << sep << id_origin << sep << id_destiny;
-    cout << "[ROUTER " << id_ << "] Repassing packet from " << id_sender << endl;
+    output() << "Repassing packet from " << id_sender << endl;
     while (!args.eof()) {
       unsigned id;
       args >> id;
@@ -143,7 +141,7 @@ void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
   args >> id_origin >> id_destiny;
   if (id_destiny == id_) {
     if (linkstates_.count(id_origin) > 0) {
-      cout  << "[ROUTER " << id_ << "] Ignoring linkstate answer from "
+      output() << "Ignoring linkstate answer from "
             << id_origin << endl;
       return;
     }
@@ -158,7 +156,7 @@ void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
       double    delay;
       stringstream(neighbor_data.substr(0,div)) >> id;
       stringstream(neighbor_data.substr(div+1)) >> delay;
-      cout  << "[ROUTER " << id_ << "] Received linkstate from " << id_origin
+      output() << "Received linkstate from " << id_origin
             << ": neighbor " << id << " delay " << delay << endl;
       Neighbor neighbor = { id, delay };
       neighbors.push_back(neighbor);
@@ -166,7 +164,8 @@ void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
     // Manda mais requisições para os que não conhece ainda
     for (LinkState::iterator it = neighbors.begin();
          it != neighbors.end(); ++it)
-      if (linkstates_.count(it->id) == 0 && pending_linkstates_.count(it->id) == 0) {
+      if (linkstates_.count(it->id) == 0 &&
+          pending_linkstates_.count(it->id) == 0) {
         stringstream request;
         request << "REQ_LINKSTATE" << sep << id_ << sep << it->id;
         network_->local_broadcast(id_, request.str());
@@ -174,7 +173,7 @@ void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
       }
     linkstates_[id_origin] = neighbors;
   } else {
-    cout  << "[ROUTER " << id_ << "] Repassing answer from " << id_origin
+    output() << "Repassing answer from " << id_origin
           << " to " << id_destiny << endl;
     stringstream  answer;
     string        token;
@@ -214,7 +213,7 @@ double Router::distvector_route (unsigned id_target, vector<unsigned>& route) co
 
 void Router::dump_linkstate_table () const {
   typedef unordered_map<unsigned, LinkState>::const_iterator iterator;
-  cout << "[ROUTER " << id_ << "] Reporting link state table:" << endl;
+  output() << "Reporting link state table:" << endl;
   for (iterator it = linkstates_.begin(); it != linkstates_.end(); ++it) {
     cout << "(" << it->first << ")";
     for (LinkState::const_iterator nt = it->second.begin();

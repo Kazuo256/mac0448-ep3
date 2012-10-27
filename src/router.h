@@ -4,6 +4,7 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 #include <list>
 #include <vector>
 #include <queue>
@@ -45,7 +46,9 @@ class Router {
     unsigned                                      id_;
     std::tr1::unordered_map<unsigned, LinkState>  linkstates_;
     std::tr1::unordered_set<unsigned>             pending_linkstates_;
-    void send_linkstate_reqs (LinkState& targets) const;
+    std::ostream& output () const {
+      return std::cout << "[ROUTER " << id_ << "] ";
+    }
 };
 
 } // namespace ep3
