@@ -251,10 +251,15 @@ double Router::linkstate_route_ms (unsigned id_target, vector<unsigned>& route) 
     }
   }
   unsigned router = id_target;
-  route.push_back(id_target);
+  std::stack<unsigned> stack;
+  stack.push(id_target);
   while (ls_route_ms_[router] != router) {
-    route.push_back(ls_route_ms_[router]);
+    stack.push(ls_route_ms_[router]);
     router = ls_route_ms_[router];
+  }
+  while (!stack.empty()) {
+    route.push_back(stack.top());
+    stack.pop();
   }
   return ls_cost_ms_[id_target];
 }
@@ -287,10 +292,15 @@ double Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route)
     }
   }
   unsigned router = id_target;
-  route.push_back(id_target);
+  std::stack<unsigned> stack;
+  stack.push(id_target);
   while (ls_route_hop_[router] != router) {
-    route.push_back(ls_route_hop_[router]);
+    stack.push(ls_route_hop_[router]);
     router = ls_route_hop_[router];
+  }
+  while (!stack.empty()) {
+    route.push_back(stack.top());
+    stack.pop();
   }
   return ls_cost_hop_[id_target];
 }

@@ -53,7 +53,7 @@ class Router {
     std::vector<unsigned>                         ls_route_ms_;
     std::vector<double>                           ls_cost_ms_;
     std::vector<unsigned>                         ls_route_hop_;
-    std::vector<double>                         ls_cost_hop_;
+    std::vector<double>                           ls_cost_hop_;
     std::ostream& output () const {
       return std::cout << "[ROUTER " << id_ << "] ";
     }
