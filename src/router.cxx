@@ -205,75 +205,94 @@ void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
 }
 
 // Métodos que calculam rotas
-bool Router::comp (unsigned id_1, unsigned id_2) const {
-  return ls_cost_[id_1] < ls_cost_[id_2];
+bool Router::comp_ms (unsigned id_1, unsigned id_2) const {
+  return ls_cost_ms_[id_1] > ls_cost_ms_[id_2];
+}
+
+bool Router::comp_hop (unsigned id_1, unsigned id_2) const {
+  return ls_cost_hop_[id_1] > ls_cost_hop_[id_2];
 }
 
 double Router::delay (unsigned origin, unsigned destiny) {
   LinkState& link_origin = linkstates_[origin];
   for (std::list<Router::Neighbor>::iterator it = link_origin.begin(); it != link_origin.end(); ++it)
-    if (it->id == destiny && it->delay >= 0.0) return it->delay;
+    if (it->id == destiny && it->delay >= 0.0) {
+      return it->delay;
+    }
   return 0.0;
 }
 
 double Router::linkstate_route_ms (unsigned id_target, vector<unsigned>& route) {
-  if (ls_route_[id_target] != INFINITO) route = ls_route_;
-  else {
-    for (unsigned i = 0; i > linkstates_.size(); i++) {
-      ls_cost_[i] = INFINITO;
-      route[i] = INFINITO;
-    } 
-    
+  if (ls_route_ms_.empty() && ls_cost_ms_.empty()) {
+    ls_route_ms_.resize(linkstates_.size(), INFINITO);
+    ls_cost_ms_.resize(linkstates_.size(), INFINITO);
+  }
+  if (ls_route_ms_[id_target] == INFINITO) {
     std::priority_queue<unsigned, vector<unsigned>, std::tr1::function<bool (unsigned, unsigned)> > 
-        PQ(bind(&Router::comp, this, _1, _2));
-    ls_cost_[id_] = 0.0;
-    route[id_] = id_;
+        PQ(bind(&Router::comp_ms, this, _1, _2));
+    ls_cost_ms_[id_] = 0.0;
+    ls_route_ms_[id_] = id_;
     PQ.push(id_);
     while (!PQ.empty()) {
       unsigned n = PQ.top();
       PQ.pop();
       LinkState& link_n = linkstates_[n];
       for (std::list<Router::Neighbor>::iterator it = link_n.begin(); it != link_n.end(); ++it) {
-        if (ls_cost_[it->id] == INFINITO) {
-          ls_cost_[it->id] = ls_cost_[n] + it->delay;
-          route[it->id] = n;
+        double cost = delay(n, it->id);
+        if (ls_cost_ms_[it->id] == INFINITO) {
+          ls_cost_ms_[it->id] = ls_cost_ms_[n] + cost;
+          ls_route_ms_[it->id] = n;
           PQ.push(it->id);
-        } else if (ls_cost_[it->id] > ls_cost_[n] + delay(n, it->id)) {
-          ls_cost_[it->id] = ls_cost_[n] + it->delay;
-          route[it->id] = n;
+        } else if (ls_cost_ms_[it->id] > ls_cost_ms_[n] + cost) {
+          ls_cost_ms_[it->id] = ls_cost_ms_[n] + cost;
+          ls_route_ms_[it->id] = n;
         }
       }
     }
   }
-  return ls_cost_[id_target];
+  unsigned router = id_target;
+  route.push_back(id_target);
+  while (ls_route_ms_[router] != router) {
+    route.push_back(ls_route_ms_[router]);
+    router = ls_route_ms_[router];
+  }
+  return ls_cost_ms_[id_target];
 }
 
-unsigned Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route) {
-  if (ls_hops_[id_target] != INFINITO) route = ls_hops_;
-  else {
-    for (unsigned i = 0; i > linkstates_.size(); i++) ls_hops_[i] = INFINITO;
-    std::priority_queue<unsigned> PQ;
-    ls_hops_[id_] = id_;
+double Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route) {
+  if (ls_route_hop_.empty() && ls_cost_hop_.empty()) {
+    ls_route_hop_.resize(linkstates_.size(), INFINITO);
+    ls_cost_hop_.resize(linkstates_.size(), INFINITO);
+  }
+  if (ls_route_hop_[id_target] == INFINITO) {
+    std::priority_queue<unsigned, vector<unsigned>, std::tr1::function<bool (unsigned, unsigned)> > 
+        PQ(bind(&Router::comp_hop, this, _1, _2));
+    ls_cost_hop_[id_] = 0.0;
+    ls_route_hop_[id_] = id_;
     PQ.push(id_);
     while (!PQ.empty()) {
       unsigned n = PQ.top();
       PQ.pop();
       LinkState& link_n = linkstates_[n];
       for (std::list<Router::Neighbor>::iterator it = link_n.begin(); it != link_n.end(); ++it) {
-        if (ls_hops_[it->id] == INFINITO) {
-          ls_hops_[it->id] = n;
+        if (ls_cost_hop_[it->id] == INFINITO) {
+          ls_cost_hop_[it->id] = ls_cost_hop_[n] + 1;
+          ls_route_hop_[it->id] = n;
           PQ.push(it->id);
+        } else if (ls_cost_hop_[it->id] > ls_cost_hop_[n] + 1) {
+          ls_cost_hop_[it->id] = ls_cost_hop_[n] + 1;
+          ls_route_hop_[it->id] = n;
         }
       }
     }
   }
-  unsigned hops = 0;
   unsigned router = id_target;
-  while (ls_hops_[router] != router) {
-    hops++;
-    router = ls_hops_[router];
+  route.push_back(id_target);
+  while (ls_route_hop_[router] != router) {
+    route.push_back(ls_route_hop_[router]);
+    router = ls_route_hop_[router];
   }
-  return hops++;
+  return ls_cost_hop_[id_target];
 }
 
 double Router::distvector_route (unsigned id_target, vector<unsigned>& route) {

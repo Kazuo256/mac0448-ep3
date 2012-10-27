@@ -33,12 +33,13 @@ class Router {
     void receive_linkstate (unsigned id_sender, std::stringstream& args);
     // Métodos que calculam rotas
     double linkstate_route_ms (unsigned id_target, std::vector<unsigned>& route);
-    unsigned linkstate_route_hop (unsigned id_target, std::vector<unsigned>& route);
+    double linkstate_route_hop (unsigned id_target, std::vector<unsigned>& route);
     double distvector_route (unsigned id_target, std::vector<unsigned>& route);
     // Informações de debug
     void dump_linkstate_table () const;
     double delay (unsigned origin, unsigned destiny);
-    bool comp (unsigned id_1, unsigned id_2) const;
+    bool comp_ms (unsigned id_1, unsigned id_2) const;
+    bool comp_hop (unsigned id_1, unsigned id_2) const;
   private:
     struct Neighbor {
       unsigned  id;
@@ -49,9 +50,10 @@ class Router {
     unsigned                                      id_;
     std::tr1::unordered_map<unsigned, LinkState>  linkstates_;
     std::tr1::unordered_set<unsigned>             pending_linkstates_;
-    std::vector<unsigned>                         ls_route_;
-    std::vector<unsigned>                         ls_hops_;
-    std::vector<double>                           ls_cost_;
+    std::vector<unsigned>                         ls_route_ms_;
+    std::vector<double>                           ls_cost_ms_;
+    std::vector<unsigned>                         ls_route_hop_;
+    std::vector<double>                         ls_cost_hop_;
     std::ostream& output () const {
       return std::cout << "[ROUTER " << id_ << "] ";
     }

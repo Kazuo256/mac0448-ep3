@@ -114,23 +114,25 @@ static bool handle_command (stringstream& command) {
   if (cmd_name == "quit") return false; // Interrompe o prompt
   // Detecta qual algoritmo de roteamento solicitado
   RoutingMethod method = NULL;
-  if (cmd_name == "ee") method = &Router::linkstate_route_ms;
-  if (cmd_name == "vd") method = &Router::distvector_route;
+  // Sabendo o algoritmo, processamos os argumentos
+  // Primeiro vem os IDs de origem e destino
+  unsigned id_origin, id_destiny;
+  if (!check_args(command)) return true;
+  command >> id_origin;
+  if (!check_id(id_origin)) return true;
+  if (!check_args(command)) return true;
+  command >> id_destiny;
+  if (!check_id(id_destiny)) return true;
+  // Depois a métrica desejada
+  string metric;
+  if (!check_args(command)) return true;
+  command >> metric;
+  // Enfim fazemos o roteador calcular a rota
+  if (cmd_name == "ee") {
+    if (metric == "a") method = &Router::linkstate_route_ms;
+    else if (metric == "h") method = &Router::linkstate_route_hop;
+  } else if (cmd_name == "vd") method = &Router::distvector_route;
   if (method) {
-    // Sabendo o algoritmo, processamos os argumentos
-    // Primeiro vem os IDs de origem e destino
-    unsigned id_origin, id_destiny;
-    if (!check_args(command)) return true;
-    command >> id_origin;
-    if (!check_id(id_origin)) return true;
-    if (!check_args(command)) return true;
-    command >> id_destiny;
-    if (!check_id(id_destiny)) return true;
-    // Depois a métrica desejada
-    string metric;
-    if (!check_args(command)) return true;
-    command >> metric;
-    // Enfim fazemos o roteador calcular a rota
     cout << "## Finding route..." << endl;
     vector<unsigned> route;
     double total_delay = (routers[id_origin].*method) (id_destiny, route);
