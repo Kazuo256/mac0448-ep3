@@ -35,7 +35,8 @@ class Router {
     // Métodos que calculam rotas
     double linkstate_route_ms (unsigned id_target, std::vector<unsigned>& route);
     double linkstate_route_hop (unsigned id_target, std::vector<unsigned>& route);
-    double distvector_route (unsigned id_target, std::vector<unsigned>& route);
+    double distvector_route_ms (unsigned id_target, std::vector<unsigned>& route);
+    double distvector_route_hop (unsigned id_target, std::vector<unsigned>& route);
     // Informações de debug
     void dump_linkstate_table () const;
     double delay (unsigned origin, unsigned destiny);

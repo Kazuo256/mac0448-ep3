@@ -134,7 +134,10 @@ static bool handle_command (stringstream& command) {
   if (cmd_name == "ee") {
     if (metric == "a") method = &Router::linkstate_route_ms;
     else if (metric == "h") method = &Router::linkstate_route_hop;
-  } else if (cmd_name == "vd") method = &Router::distvector_route;
+  } else {
+    if (metric == "a") method = &Router::distvector_route_ms;
+    else if (metric == "h") method = &Router::distvector_route_hop;
+  }
   // Enfim fazemos o roteador calcular a rota
   cout << "## Finding route..." << endl;
   vector<unsigned> route;
