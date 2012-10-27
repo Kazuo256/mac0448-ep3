@@ -104,7 +104,7 @@ static bool check_args (const stringstream& command) {
   return true;
 }
 
-typedef double (Router::*RoutingMethod) (unsigned, vector<unsigned>&) const;
+typedef double (Router::*RoutingMethod) (unsigned, vector<unsigned>&);
 
 static bool handle_command (stringstream& command) {
   // Um monte de código feio...

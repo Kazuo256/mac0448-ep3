@@ -17,6 +17,10 @@ class Network;
 
 class Router {
   public:
+    struct Neighbor {
+      unsigned  id;
+      double    delay;
+    };
     Router (Network* network, unsigned id) :
       network_(network), id_(id) {}
     // Métodos básicos.
@@ -32,20 +36,19 @@ class Router {
     void respond_linkstate (unsigned id_sender, std::stringstream& args);
     void receive_linkstate (unsigned id_sender, std::stringstream& args);
     // Métodos que calculam rotas
-    double linkstate_route (unsigned id_target, std::vector<unsigned>& route) const;
-    double distvector_route (unsigned id_target, std::vector<unsigned>& route) const;
+    double linkstate_route (unsigned id_target, std::vector<unsigned>& route);
+    double distvector_route (unsigned id_target, std::vector<unsigned>& route);
     // Informações de debug
     void dump_linkstate_table () const;
+    bool operator < (const Neighbor& rhs) const;
   private:
-    struct Neighbor {
-      unsigned  id;
-      double    delay;
-    };
     typedef std::list<Neighbor> LinkState;
     Network*                                      network_;
     unsigned                                      id_;
     std::tr1::unordered_map<unsigned, LinkState>  linkstates_;
     std::tr1::unordered_set<unsigned>             pending_linkstates_;
+    std::vector<unsigned>                         ls_route_;
+    std::vector<double>                           ls_cost_;
     std::ostream& output () const {
       return std::cout << "[ROUTER " << id_ << "] ";
     }

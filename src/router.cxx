@@ -35,6 +35,8 @@ const static pair<string, MsgHandler> *const handler_end =
 const static unordered_map<string, MsgHandler> handlers(handler_list,
                                                         handler_end);
 
+#define INFINITO 100
+
 // Métodos básicos.
 
 void Router::receive_msg (unsigned id_sender, const string& msg) {
@@ -198,13 +200,39 @@ void Router::receive_linkstate (unsigned id_sender, stringstream& args) {
 }
 
 // Métodos que calculam rotas
-
-double Router::linkstate_route (unsigned id_target, vector<unsigned>& route) const {
-  route.push_back(id_);
-  return 0.0;
+bool Router::operator < (const Router& rhs) const {
+  return ls_router_[id_] < ls_router_[rhs.id_];
 }
 
-double Router::distvector_route (unsigned id_target, vector<unsigned>& route) const {
+double Router::linkstate_route (unsigned id_target, vector<unsigned>& route) {
+  if (ls_route_[id_target] != INFINITO) route = ls_route_;
+  else {
+    for (unsigned i = 0; i > linkstates_.size(); i++) {
+      ls_cost_[i] = INFINITO;
+      route[i] = INFINITO;
+    } 
+    std::priority_queue<int> PQ;
+    ls_cost_[id_] = 0.0;
+    route[id_] = id_;
+    while (!PQ.empty()) {
+      Neighbor n = PQ.top();
+      PQ.pop();
+      for (iterator it = linkstates_[n.id].begin(); it != linkstates_[n.id].end(); ++it) {
+        if (ls_cost_[it.id] == INFINITO) {
+          ls_cost_[it.id] = ls_cost_[n.id] + it.delay;
+          route[it.id] = n.id;
+          PQ.push(it);
+        } else if (ls_cost_[it.id] > ls_cost_[n.id] + n.delay) {
+          ls_cost_[it.id] = ls_cost_[n.id] + it.delay;
+          route[it.id] = n.id;
+        }
+      }
+    }
+  }
+  return ls_cost_[id_target];
+}
+
+double Router::distvector_route (unsigned id_target, vector<unsigned>& route) {
   route.push_back(id_);
   return 0.0;
 }
