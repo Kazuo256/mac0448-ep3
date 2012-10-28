@@ -109,10 +109,10 @@ static bool check_args (const stringstream& command) {
   return true;
 }
 
-typedef double (Router::*RoutingMethod) (unsigned, vector<unsigned>&);
 
 static void linkstate_route (unsigned id_origin, unsigned id_destiny,
                              const string& metric) {
+  typedef double (Router::*RoutingMethod) (unsigned, vector<unsigned>&);
   // Detecta qual algoritmo de roteamento solicitado
   RoutingMethod method = NULL;
   if (metric == "a") method = &Router::linkstate_route_ms;
@@ -135,13 +135,22 @@ static void linkstate_route (unsigned id_origin, unsigned id_destiny,
   cout << ")" << endl;
 }
 
+static void distvector_route (unsigned id_origin, unsigned id_destiny,
+                              const string& metric) {
+
+}
+
 static bool handle_command (stringstream& command) {
+  typedef void (*RouteFunc) (unsigned, unsigned, const string&);
   // Um monte de código feio...
   // Começa verificando a primeira palavra do comando
   string cmd_name;
   command >> cmd_name;
   if (cmd_name == "quit") return false; // Interrompe o prompt
-  if (cmd_name != "ee" && cmd_name != "vd") {
+  RouteFunc func = NULL;
+  if (cmd_name == "ee") func = linkstate_route;
+  else if (cmd_name == "vd") func = distvector_route;
+  else {
     cout << "## Unknown command '" << cmd_name << "'." << endl;
     return true;
   }
@@ -158,7 +167,7 @@ static bool handle_command (stringstream& command) {
   if (!check_args(command)) return true;
   command >> metric;
   // Enfim fazemos o roteador calcular a rota
-  linkstate_route(id_origin, id_destiny, metric);
+  func(id_origin, id_destiny, metric);
   return true;
 }
 
