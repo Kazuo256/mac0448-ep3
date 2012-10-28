@@ -73,6 +73,7 @@ V. Abstração da Rede
 
   No EP temos duas classes principais: Network e Router. Juntas elas formam uma
 abstração da rede simulada.
+
   A classe Network mantém as informações da topologia da rede e controla o fluxo
 de pacotes entre os elementos da rede. Quando algum roteador envia uma mensagem
 pela rede, seja para algum destino particular ou em broadcast, a rede constrói
@@ -82,10 +83,12 @@ ao alcance do pacote - ou seja, roteadores não podem ouvir mensagens que não s
 para eles. A lógica do programa, nos momentos em que simula a rede, extrai os
 pacotes da fila e entrega-os aos devidos roteadores. Esse processo é repetido
 quantas vezes forem necessárias.
+
   Isso significa, basicamente, que quando um roteador envia uma mensagem, o
 roteador receptor não reage imediatamente. É preciso que chegue a vez do pacote
 de ser removida da fila de transmissões da Network para que finalmente o
 roteador alvo receba o pacote.
+
   A classe Router representa os roteadores da rede. Existe um objeto dessa
 classe para cada roteador. Todo roteador tem um ID, que é um inteiro não
 negativo e funciona exatamente como se fosse o endereço dele na rede. A classe
@@ -93,6 +96,7 @@ Router tem dois tipos bem diferentes de métodos. O primeiro deles funciona
 normalmente, tendo que ser chamado pela lógica do programa para ser executado,
 e em geral acaba por enviar mensagens para a rede através da classe Network. Já
 o segundo, são métodos que só são chamados em resposta a mensagens da rede.
+
   Assim, quando algum tipo de procesamento é exigido dos roteadores, o que se
 faz é chamar um dos métodos do primeiro tipo - o que poderá fazer os roteadores
 enviarem mensagens pela rede - para depois simular a rede usando a classe
@@ -102,34 +106,164 @@ haver mais pacotes sendo enviados pela rede.
 
 VI. Protocolo
 
-  O protocolo da camada de aplicação do nosso EP é baseada na troca de comandos
-com argumentos. O cliente e o servidor trocam pacotes contendo um identificador
-do comando (chamado de código de operação) e os argumentos daquele comando, se
-houver. O pacote é formado usando dados binários direto, ao invés de strings
-como em HTTP e outros protocolos. E no caso usamos apenas valores de 1 byte para
-compor o pacote, então não temos problemas com endianness.
-  O pacote fica com o seguinte formato:
+  Os pacotes transmitidos pela rede têm o seguinte formato:
 
-   +--------+----------+-----------+-----------+-----------+-----------+-----+
-   | opcode | num_args | arg1_size | arg1_data | arg2_size | arg2_data | ... |
-   +--------+----------+-----------+-----------+-----------+-----------+-----+
+   +-----------+-------------+-----+
+   | id_sender | id_receiver | msg |
+   +-----------+-------------+-----+
 
   Onde:
 
-    opcode:       é um byte contendo o código de operação do comando.
-    num_args:     é um byte contendo o número de argumentos do comando.
-    arg(i)_size:  é um byte contendo o tamanho do i-ésimo argumento do comando.
-    arg(i)_data:  é uma sequência de bytes compondo os dados do i-ésimo
-                  argumento do comando.
+    id_sender:    é o ID do remetente.
+    id_receiver:  é o ID do destinatário.
+    msg:          é a mensagem sendo transmitida.
 
-  Se não houver argumentos, num_args é zero e não há nada depois dele. Há um
-máximo de 255 argumentos com 255 bytes cada, mas isso não compromete nada do
-funcionamento do sistema.
+  Os pacotes são abstraídos no código pela estrutura Network::Packet. Nela,
+id_sender e id_receiver são do tipo unsigned, e msg é uma string.
+  As mensagens, por sua vez, têm o seguinte formato:
+
+   +----------+------+------+-----+
+   | msg_type | arg1 | arg2 | ... |
+   +----------+------+------+-----+
+
+  Onde:
+
+    msg_type:     é o tipo da mensagem.
+    arg(i):       é o i-ésimo argumento da mensagem.
+
+  Mensagens são abstraísdas no código como strings compostas por palavras
+separadas por espaços. O tipo da mensagem é sempre a primeira palavra, e as
+demais são os argumentos. A quantidade e os possíveis valores dos argumentos
+dependem do tipo de mensagem.
+
+  Segue uma descrição dos tipos de mensagens, agrupadas pelo protocolo da qual
+fazem parte.
+
+  (VI-a) Protocolo de Reconhecimento de Vizinhança
+
+    Esse protocolo é o primeiro usado na execução do EP. Serve para os
+  roteadores descobrirem seus vizinhos. Há dois tipos de mensagens nesse
+  protocolo: HELLO e HELLO_ACK. Nenhuma delas recebe argumento algum.
+
+    > HELLO
+
+      É a mensagem de "cumprimento" dos roteadores. Cada um deles envia uma
+    essas em broadcast, o que faz ela chegar em todos os seus vizinhos.
+    Quem recebe um HELLO, por sua vez, deve responder com um HELLO_ACK ao
+    remetente do pacote para que ele o reconheça como vizinho.
+
+    > HELLO_ACK
+
+      É a mensagem que os vizinhos mandando em reconhecimento à mensagem HELLO.
+    Uma vez que um roteador recebe uma dessas, ele sabe que o remetente dela é
+    um vizinho seu e guarda essa informação.
+
+  (VI-b) Protocolo de Estado de Enlace
+
+    Esse protocolo é usado para os roteadores descobrirem o estado de enlace de
+  todos os outros roteadores na rede. Há dois tipos de mensagens usadas por esse
+  protocolo: REQ_LINKSTATE e ANSWER_LINKSTATE.
+
+    > REQ_LINKSTATE <origin> <destiny> [<step1> <step2> ...]
+
+      É a mensagem que um roteador envia requisitando o estado de enlace de
+    algum outro roteador, ou uma requisição que foi repassada. O argumento
+    <origin> é o ID de quem fez a requisição e <destiny> é o ID do roteador
+    para o qual está sendo feita a requisição. Quando o roteador que recebe essa
+    mensagem é o destinatário da requisição, ele emite uma mensagem de
+    ANSWER_LINKSTATE em resposta. Quando ele não é, ele repassa a mensagem.
+      O argumento <step(i)> é o ID do i-ésimo roteador que repassou essa
+    mensagem. Ele serve para evitar que a mensagem seja repassada para
+    roteadores pelos quais ela já passou, e para saber um caminho pelo qual
+    enviar a resposta quando a requisição chegar no seu objetivo.
+      Quando o destinatário não é um vizinho do do roteador que recebeu a
+    mensagem, ele a envia a repassa para todos os vizinhos que não estejam
+    nos argumentos <step(i)>. Isso pode levar a requisições e respostas
+    duplicadas, mas nesse caso os roteadores que fizeram a requisição
+    ignoram a duplicata.
+
+    > ANSWER_LINKSTATE <origin> <destiny> [<step1> ... "|"] <info1> <info2> ...
+
+      É a mensagem que um roteador envia em resposta a uma requisição de estado
+    de enlace, ou uma resposta que foi repassada. O argumento <origin> é o ID do
+    roteador que enviou a resposta e <destiny> é o ID do que originalmente
+    enviou a requisição, e espera pela resposta. Quando o roteador que recebe
+    essa mensagem é quem fez a requisição, ele extrai as informações de estado
+    de enlace desejadas dos argumentos <info(i)> e guarda na sua tabela de
+    roteamento por estado de enlace local. Quando ele não é, ele repassa a
+    resposta para o roteador cujo ID é o primeiro <step(i)> dos argumentos.
+      O argumento <info(i)> contém informações do estado do i-ésimo enlace do
+    roteador que está respondendo a erquisição. Essa informação fica no formato
+    "id:delay", com "id" sendo ID de um vizinho do roteador e "delay" o atraso
+    em milisegundos entre eles.
+      O argumento "|" serve apenas para separar os argumentos <step(i)> dos
+    <info(i)> quando necessário.
+      Os argumentos <step(i)> formam uma rota que a mensagem deve seguir de
+    volta para o roteador que fez a requisição. Quem inicialmente coloca ela na
+    mensagem é o roteador para o qual foi feita a requisição de estado de
+    enlace. Ele a coloca na ordem que deve ser seguida, isso é, inversa àquela
+    pela qual a mensagem passou para chegar até ele. Cada roteador que repassa
+    a mensagem retira dela o primeiro <step(i)>, de forma que o próximo só
+    precisa sempre usar o primeiro deles. Quando não houver mais nenhum, é
+    porque o destinatário da mensagem é vizinho do roteador atual.
+      Para cada argumento <info(i)> que for um ID que o roteador que fez a
+    requisição não conheça, ele envia uma nova requisição para esse ID. Assim,
+    o processo começa com cada roteador requisitando seus vizinhos, depois os
+    vizinhos dos vizinhos, e assim por diante até que todos conheçam todos.
+
+  (VI-c) Protocolo de Vetor de Distâncias
+
+    Esse protocolo é usado para os roteadores descobrirem os vetores de
+  distâncias de seus vizinhos. Há apenas um tipo de mensagem nesse protocolo:
+  DISTVECTOR.
+
+  > DISTVECTOR <dist1> <dist2> ...
+
+    É a mensagem que um roteador envia a seus vizinhos informando seu vetor de
+  distâncias. Cada argumento <dist(i)> é uma das distâncias do roteador no
+  formato "id:delay:hops", com "id" sendo o ID de algum outro roteador, "delay"
+  o menor atraso total conhecido e "hops" o menor número de hops totais
+  conhecido até esse outro roteador.
+    Cada roteador que recebe essa mensagem, usa o critério do algoritmo de
+  BELLMAN-FORD para verificar se seu vetor de distâncias local precisa ser
+  atualizado. Caso ele seja, o roteador envia também uma mensagem DISTVECTOR
+  informando seu novo vetor de distâncias.
+    Como a rede é estática, esse processo converge e, no final, cada roteador
+  terá em seu vetor de distâncias as distâncias mínimas - tanto em atraso como
+  em hops - para cada um dos outros roteadores da rede, assim como o vetor de
+  distância de seus vizinhos com a mesma propriedade.
+
+  (VI-d) Protocolo de Roteamento por Vetor de Distâncias
+
+    Esse protocolo é usado para os roteadores descobrirem uma rota entre dois
+  deles. Diferentemente do algoritmo de Dijkstra que usa apenas tabela de estado
+  de enlace completa do roteador de origem da rota, o algoritmo de roteamento
+  com vetor de distâncias não tem todas as informações que precisa em um único
+  roteador. Logo é preciso que a rota seja encontrada com a ajuda de outros
+  roteadores, e para isso é usado este protocolo. Há dois tipos de mensagens
+  muito parecidas nele: ROUTE_MS e ROUTE_HOP. Como se deve imaginar, a única
+  diferença entre eles é que um usa o atraso como métrica de custo e o outro usa
+  os hops para tanto. Por isso explicamos ambos de uma vez só:
+
+  > ROUTE_{MS,HOP} <destiny> <cost> [<step1> <step2> ...]
+
+    É a mensagem que os roteadores enviam para o próximo roteador mais próximo
+  do destino da rota. O argumento <destiny> é o ID desse destino, e <cost> é o
+  custo total da rota até o momento.
+    Cada argumento <step(i)> é o ID de um roteador pela qual a rota já passou.
+    O roteador que recebe essa mensagem usa o critério de BELLMAN-FORD e o seus
+  vetores de distâncias locais para descobrir o próximo passo da rota. O
+  roteador repassa a mensagem para ele, atualizando o custo total da rota, e
+  adicionando seu ID como um argumento <step(i)> ao final da mensagem.
+    Quando finalmente a mensagem chega ao roteador de destino, este guarda a
+  sequência dos argumentos <step(i)> localmente, pois ela é a rota requisitada
+  pelo usuário. A lógica do programa extrai essa informação do roteador quando
+  ela percebe que o processo de roteamento chegou ao fim.
+
 
 VII. Organização do código:
 
-  Segue a descrição do que cada arquivo de código é responsável. O nome dos
-arquivos é relativo à pasta src/, como visto na seção I desse LEIAME.
+  
 
   main.c:
 
@@ -140,59 +274,4 @@ arquivos é relativo à pasta src/, como visto na seção I desse LEIAME.
   do nosso EP.
 
   ep1.h e ep1.c:
-
-    Contém a lógica de mais alto nível do servidor HTTP. Aqui, o código limita-
-  se a usar os módulos EP1_NET e EP1_SERVER (explicados adiante) para compor
-  exatamente o mesmo loop de read-write que havia no exemplo do professor, só
-  que com os detalhes de implementação encapsulados.
-
-  ep1/net.h e ep1/net.c:
-
-    É o módulo EP1_NET. Responsável por receber e enviar pacotes usando a API de
-  sockets. Define a estrutura EP1_NET_packet que representa um pacote HTTP
-  "bruto", isso é, da maneira como ele chegou da rede ou pronto para ser enviado
-  para ela.
-
-  ep1/server.h e ep1/server.c:
-
-    É o módulo EP1_SERVER. Responsável pela lógica de mais baixo nível do
-  servidor HTTP. Interpreta as requisições e constrói os pacotes de resposta
-  a serem enviados, seguindo o protocolo HTTP dentro das especificações do
-  enunciado.
-
-  ep1/date.h e ep1/date.c:
-
-    É o módulo EP1_DATE. Responsável por produzir strings de data formatadas,
-  seguindo o padrão usado pelo Apache.
-
-  Por falta de tempo, o código não ficou tão organizado quanto gostaríamos. Mas
-todas as classes estão devidamente documentadas e as partes críticas do código
-estão comentadas com bastante clareza. Para saber o que cada classe faz,
-recomendamos ler o comentário antes de cada classe nos headers.
-  O arquivo principal do servidor é o src/server.cxx, embora a lógica principal
-dele esteja em src/serverhandler.cxx. O arquivo principal do cliente é o
-src/client.cxx, que de fato contém a lógica principal do cliente.
-  As implementações das conexões usando TCP e UDP podem ser vistas nas classes
-TCPConnection e UDPConnection, como mencionado na seção anterior. O código do
-sistema procura usar ponteiros para Connection, abstraindo o protocolo usado
-por trás da transferência de comandos.
-  Também como mencionado na seção anterior, é possível ver todos os comandos
-do nosso protocolo de camada de aplicação, assim como os algoritmos de converter
-esses comandos para pacotes e vice-versa, na classe Command.
-
-
-=== THIS IS A STUB ===
-
-
-Algumas observações:
-
-  [+] Normalmente, quando um pacote é enviado para a rede com algum endereço de
-      destino específico, todos ao seu alcance recebem o pacote. Aquele a quem
-      se destina o pacote reconhece e trata a mensagem recebida, enquanto os
-      demais simplesmente ignoram-no. Estou abstraindo esse conceito no EP,
-      fazendo que apenas o verdadeiro destinatário, se alcançável, trate o
-      pacote que lhe é enviado. Ou seja, os demais roteadores "ignoram" o
-      pacote simplesmente porque eu não chamo o método deles de tratar
-      mensagens quando o pacote não é para eles, mesmo que ele possa chegar até
-      eles.
 
