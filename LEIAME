@@ -263,15 +263,14 @@ fazem parte.
 
 VII. Organização do código:
 
-  
+  main.cxx: arquivo com a função main().
 
-  main.c:
+  ep3.cxx e ep3.h: arquivos com a lógica geral do programa.
+  (a simulação da rede e o prompt está aqui)
 
-    Contém basicamente o arquivo de exemplo do professor com algumas mudanças,
-  tanto na seção reservada para o código do EP quanto nos includes e nas
-  declarações das variáveis da função main(). Só tiramos algumas variáveis que
-  deixaram de ser necessárias para evitar warnings. Os includes são dos arquivos
-  do nosso EP.
+  network.cxx e network.h: arquivos com a classe Network.
+  (o protocolo de pacotes está aqui)
 
-  ep1.h e ep1.c:
+  router.cxx e router.h: arquivos com a classe Router.
+  (os protocolos de mensagens estão aqui)
 
