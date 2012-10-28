@@ -1,4 +1,186 @@
 
+MAC0448-2012: Programação para Redes de Computadores.
+Terceiro Exercício-Programa: Simulador de Protocolos de Roteamento
+
+Alunos:                     Nº USP:
+  Thiago de Gouveia Nunes     6797289
+  Wilson Kazuo Mizutani       6797230
+
+
+I. Organização dos arquivos.
+
+
+  Nosso EP deve apresentar a seguinte organização de arquivos e pastas:
+
+    ep3-thiago-wilson/
+    |- Makefile
+    |- objs.makefile
+    |- deps.makefile
+    |- LEIAME
+    |- src/
+    |  |- main.cxx
+    |  |- ...demais arquivos de código fonte...
+
+
+II. Compilação.
+
+
+  O programa vem com um Makefile para compilá-lo. Basta usar o comando
+
+    $ make
+
+  para compilar o EP normalmente, ou
+
+    $ make debug
+
+  para compilar com flags de depuração. Se o programa foi compilado normalmente
+alguma vez antes, então é preciso usar
+
+    $ make clean
+
+  antes de tentar compilar no modo de depuração.
+
+
+III. Dependências.
+
+
+  Usamos apenas as bibliotecas padrão, incluindo o Technichal Report 1,
+disponível no mínimo desde o Ubuntu 10.10 e do Debian Stable atual. Supomos que
+o programa será compilado e executado em um Linux como esses (como é o caso da
+RedeLinux do IME, por exemplo).
+
+
+IV. Modo de uso do programa.
+
+
+  Como pede o enunciado, nosso programa segue a seguinte assinatura de linha de
+comando:
+
+    ./ep3 <arquivo_de_entrada>
+
+  Onde:
+
+    <arquivo_de_entrada>  É um arquivo de topologia de rede, como especificado
+                          no enunciado.
+
+  Quando o programa roda, ele inicializa as tabelas de roteamento dos roteadores
+para depois entrar em um prompt. No prompt, os comandos aceitos também são
+exatamente aqueles especificados no enunciado.
+
+
+V. Abstração da Rede
+
+
+  No EP temos duas classes principais: Network e Router. Juntas elas formam uma
+abstração da rede simulada.
+  A classe Network mantém as informações da topologia da rede e controla o fluxo
+de pacotes entre os elementos da rede. Quando algum roteador envia uma mensagem
+pela rede, seja para algum destino particular ou em broadcast, a rede constrói
+os pacotes correspondentes e guarda eles numa fila. Um pacote desses é criado
+apenas para os roteadores que forem alvos válidos para ele, mesmo que ele esteja
+ao alcance do pacote - ou seja, roteadores não podem ouvir mensagens que não são
+para eles. A lógica do programa, nos momentos em que simula a rede, extrai os
+pacotes da fila e entrega-os aos devidos roteadores. Esse processo é repetido
+quantas vezes forem necessárias.
+  Isso significa, basicamente, que quando um roteador envia uma mensagem, o
+roteador receptor não reage imediatamente. É preciso que chegue a vez do pacote
+de ser removida da fila de transmissões da Network para que finalmente o
+roteador alvo receba o pacote.
+  A classe Router representa os roteadores da rede. Existe um objeto dessa
+classe para cada roteador. Todo roteador tem um ID, que é um inteiro não
+negativo e funciona exatamente como se fosse o endereço dele na rede. A classe
+Router tem dois tipos bem diferentes de métodos. O primeiro deles funciona
+normalmente, tendo que ser chamado pela lógica do programa para ser executado,
+e em geral acaba por enviar mensagens para a rede através da classe Network. Já
+o segundo, são métodos que só são chamados em resposta a mensagens da rede.
+  Assim, quando algum tipo de procesamento é exigido dos roteadores, o que se
+faz é chamar um dos métodos do primeiro tipo - o que poderá fazer os roteadores
+enviarem mensagens pela rede - para depois simular a rede usando a classe
+Network - o que pode chamar os métodos do segundo tipo nos roteadores - até não
+haver mais pacotes sendo enviados pela rede.
+
+
+VI. Protocolo
+
+  O protocolo da camada de aplicação do nosso EP é baseada na troca de comandos
+com argumentos. O cliente e o servidor trocam pacotes contendo um identificador
+do comando (chamado de código de operação) e os argumentos daquele comando, se
+houver. O pacote é formado usando dados binários direto, ao invés de strings
+como em HTTP e outros protocolos. E no caso usamos apenas valores de 1 byte para
+compor o pacote, então não temos problemas com endianness.
+  O pacote fica com o seguinte formato:
+
+   +--------+----------+-----------+-----------+-----------+-----------+-----+
+   | opcode | num_args | arg1_size | arg1_data | arg2_size | arg2_data | ... |
+   +--------+----------+-----------+-----------+-----------+-----------+-----+
+
+  Onde:
+
+    opcode:       é um byte contendo o código de operação do comando.
+    num_args:     é um byte contendo o número de argumentos do comando.
+    arg(i)_size:  é um byte contendo o tamanho do i-ésimo argumento do comando.
+    arg(i)_data:  é uma sequência de bytes compondo os dados do i-ésimo
+                  argumento do comando.
+
+  Se não houver argumentos, num_args é zero e não há nada depois dele. Há um
+máximo de 255 argumentos com 255 bytes cada, mas isso não compromete nada do
+funcionamento do sistema.
+
+VII. Organização do código:
+
+  Segue a descrição do que cada arquivo de código é responsável. O nome dos
+arquivos é relativo à pasta src/, como visto na seção I desse LEIAME.
+
+  main.c:
+
+    Contém basicamente o arquivo de exemplo do professor com algumas mudanças,
+  tanto na seção reservada para o código do EP quanto nos includes e nas
+  declarações das variáveis da função main(). Só tiramos algumas variáveis que
+  deixaram de ser necessárias para evitar warnings. Os includes são dos arquivos
+  do nosso EP.
+
+  ep1.h e ep1.c:
+
+    Contém a lógica de mais alto nível do servidor HTTP. Aqui, o código limita-
+  se a usar os módulos EP1_NET e EP1_SERVER (explicados adiante) para compor
+  exatamente o mesmo loop de read-write que havia no exemplo do professor, só
+  que com os detalhes de implementação encapsulados.
+
+  ep1/net.h e ep1/net.c:
+
+    É o módulo EP1_NET. Responsável por receber e enviar pacotes usando a API de
+  sockets. Define a estrutura EP1_NET_packet que representa um pacote HTTP
+  "bruto", isso é, da maneira como ele chegou da rede ou pronto para ser enviado
+  para ela.
+
+  ep1/server.h e ep1/server.c:
+
+    É o módulo EP1_SERVER. Responsável pela lógica de mais baixo nível do
+  servidor HTTP. Interpreta as requisições e constrói os pacotes de resposta
+  a serem enviados, seguindo o protocolo HTTP dentro das especificações do
+  enunciado.
+
+  ep1/date.h e ep1/date.c:
+
+    É o módulo EP1_DATE. Responsável por produzir strings de data formatadas,
+  seguindo o padrão usado pelo Apache.
+
+  Por falta de tempo, o código não ficou tão organizado quanto gostaríamos. Mas
+todas as classes estão devidamente documentadas e as partes críticas do código
+estão comentadas com bastante clareza. Para saber o que cada classe faz,
+recomendamos ler o comentário antes de cada classe nos headers.
+  O arquivo principal do servidor é o src/server.cxx, embora a lógica principal
+dele esteja em src/serverhandler.cxx. O arquivo principal do cliente é o
+src/client.cxx, que de fato contém a lógica principal do cliente.
+  As implementações das conexões usando TCP e UDP podem ser vistas nas classes
+TCPConnection e UDPConnection, como mencionado na seção anterior. O código do
+sistema procura usar ponteiros para Connection, abstraindo o protocolo usado
+por trás da transferência de comandos.
+  Também como mencionado na seção anterior, é possível ver todos os comandos
+do nosso protocolo de camada de aplicação, assim como os algoritmos de converter
+esses comandos para pacotes e vice-versa, na classe Command.
+
+
 === THIS IS A STUB ===
 
 
