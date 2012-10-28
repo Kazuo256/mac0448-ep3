@@ -74,8 +74,11 @@ class Router {
     typedef std::tr1::unordered_map<unsigned, Dist>   DistVector;
     typedef std::tr1::function<double (const Dist&)>  Metric;
     std::tr1::unordered_map<unsigned, DistVector> distvectors_;
-    // Envia o vetor de distâncias para todos os vizinhos.
+    // Envia o vetor de distâncias para todos os vizinhos
     void send_distvector ();
+    // Segue a rota do algoritmo de vetor de distâncias
+    void dv_follow_route (unsigned id_target, double cost,
+                          const std::string& path, Metric metric);
     // Encontra próximo passo da rota
     unsigned dv_next_step (unsigned id_target, Metric metric);
     //== Outros ==//

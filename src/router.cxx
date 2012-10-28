@@ -264,16 +264,9 @@ void Router::route_ms (unsigned id_sender, stringstream& args) {
     // TODO
     return;
   }
-  unsigned next = dv_next_step(id_target, mem_fn(&Dist::get_delay));
-  string routed;
-  getline(args, routed);
-  stringstream msg;
-  msg << "ROUTE_MS"
-      << sep << id_target
-      << sep << (cost+neighbors_[next])
-      << routed
-      << sep << id_;
-  network_->send(id_, next, msg.str());
+  string path;
+  getline(args, path);
+  dv_follow_route(id_target, cost, path, mem_fn(&Dist::get_delay));
 }
 
 void Router::route_hop (unsigned id_sender, stringstream& args) {
@@ -384,16 +377,22 @@ double Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route)
 
 void Router::distvector_route_ms (unsigned id_target) {
   if (id_target == id_) return;
-  unsigned next = dv_next_step (id_target, mem_fn(&Dist::get_delay));
-  stringstream msg;
-  msg << "ROUTE_MS"
-      << sep << id_target
-      << sep << neighbors_[next]
-      << sep << id_;
-  network_->send(id_, next, msg.str());
+  dv_follow_route(id_target, 0.0, "", mem_fn(&Dist::get_delay));
 }
 
 void Router::distvector_route_hop (unsigned id_target) {
+}
+
+void Router::dv_follow_route (unsigned id_target, double cost,
+                              const string& path, Metric metric) {
+  unsigned next = dv_next_step(id_target, metric);
+  stringstream msg;
+  msg << "ROUTE_MS"
+      << sep << id_target
+      << sep << (cost+neighbors_[next])
+      << path
+      << sep << id_;
+  network_->send(id_, next, msg.str());
 }
 
 unsigned Router::dv_next_step (unsigned id_target, Metric metric) {
