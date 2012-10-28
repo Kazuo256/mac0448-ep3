@@ -19,7 +19,7 @@ class Network;
 class Router {
   public:
     Router (Network* network, unsigned id) :
-      network_(network), id_(id) {}
+      network_(network), id_(id), lastcost_(0.0) {}
     //== Métodos básicos ==//
     unsigned id () const { return id_; }
     void receive_msg (unsigned id_sender, const std::string& msg);
@@ -45,7 +45,7 @@ class Router {
     // Usados para vetor de distâncias:
     void distvector_route_ms (unsigned id_target);
     void distvector_route_hop (unsigned id_target);
-    double distvector_extract_route (std::vector<unsigned>& route) const;
+    double distvector_extract_route (std::vector<unsigned>& route);
     //== Informações de debug ==//
     void dump_linkstate_table () const;
   private:
@@ -74,8 +74,13 @@ class Router {
     typedef std::tr1::unordered_map<unsigned, Dist>   DistVector;
     typedef std::tr1::function<double (const Dist&)>  Metric;
     std::tr1::unordered_map<unsigned, DistVector> distvectors_;
+    std::vector<unsigned>                         lastroute_;
+    double                                        lastcost_;
     // Envia o vetor de distâncias para todos os vizinhos
     void send_distvector ();
+    // Lida com requisição de roteamento
+    void dv_handle_route (std::stringstream& args, Metric metric,
+                          const std::string& metric_name);
     // Segue a rota do algoritmo de vetor de distâncias
     void dv_follow_route (unsigned id_target, double cost,
                           const std::string& path, Metric metric,

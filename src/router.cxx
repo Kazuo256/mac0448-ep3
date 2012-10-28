@@ -256,31 +256,11 @@ void Router::receive_distvector (unsigned id_sender, stringstream& args) {
 }
 
 void Router::route_ms (unsigned id_sender, stringstream& args) {
-  unsigned  id_target;
-  double    cost;
-  args >> id_target;
-  args >> cost;
-  if (id_target == id_) {
-    // TODO
-    return;
-  }
-  string path;
-  getline(args, path);
-  dv_follow_route(id_target, cost, path, mem_fn(&Dist::get_delay), "MS");
+  dv_handle_route(args, mem_fn(&Dist::get_delay), "MS");
 }
 
 void Router::route_hop (unsigned id_sender, stringstream& args) {
-  unsigned  id_target;
-  double    cost;
-  args >> id_target;
-  args >> cost;
-  if (id_target == id_) {
-    // TODO
-    return;
-  }
-  string path;
-  getline(args, path);
-  dv_follow_route(id_target, cost, path, mem_fn(&Dist::get_hops), "HOP");
+  dv_handle_route(args, mem_fn(&Dist::get_hops), "HOP");
 }
 
 //== Métodos para calcular rotas ==//
@@ -395,6 +375,26 @@ void Router::distvector_route_hop (unsigned id_target) {
   dv_follow_route(id_target, 0.0, "", mem_fn(&Dist::get_hops), "HOP");
 }
 
+void Router::dv_handle_route (stringstream& args, Metric metric,
+                              const string& metric_name) {
+  unsigned  id_target;
+  double    cost;
+  args >> id_target;
+  args >> cost;
+  if (id_target == id_) {
+    lastcost_ = cost;
+    while (!args.eof()) {
+      unsigned id;
+      args >> id;
+      lastroute_.push_back(id);
+    }
+    return;
+  }
+  string path;
+  getline(args, path);
+  dv_follow_route(id_target, cost, path, metric, metric_name);
+}
+
 void Router::dv_follow_route (unsigned id_target, double cost,
                               const string& path, Metric metric,
                               const string& metric_name) {
@@ -423,9 +423,13 @@ unsigned Router::dv_next_step (unsigned id_target, Metric metric) {
   return next;
 }
 
-double Router::distvector_extract_route (vector<unsigned>& route) const {
+double Router::distvector_extract_route (vector<unsigned>& route) {
+  route.insert(route.end(), lastroute_.begin(), lastroute_.end());
   route.push_back(id_);
-  return 0.0;
+  double cost = lastcost_;
+  lastroute_.clear();
+  lastcost_ = 0.0;
+  return cost;
 }
 
 // Informações de debug
