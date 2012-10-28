@@ -5,8 +5,6 @@
 #include <utility>
 #include <limits>
 #include <stack>
-#include <tr1/functional>  
-#include <tr1/unordered_map>
 
 using std::numeric_limits;
 using std::list;
@@ -21,6 +19,7 @@ using std::tr1::unordered_map;
 using std::tr1::unordered_set;
 using std::tr1::function;
 using std::tr1::bind;
+using std::tr1::mem_fn;
 using namespace std::tr1::placeholders;
 using std::stack;
 
@@ -355,12 +354,35 @@ double Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route)
   return ls_cost_hop_[id_target];
 }
 
-double Router::distvector_route_ms (unsigned id_target, vector<unsigned>& route) {
-  route.push_back(id_);
-  return 0.0;
+void Router::distvector_route_ms (unsigned id_target) {
+  if (id_target == id_) return;
+  unsigned next = dv_next_step (id_target, mem_fn(&Dist::get_delay));
+  stringstream msg;
+  msg << "ROUTE_MS"
+      << sep << id_target
+      << sep << neighbors_[next]
+      << sep << id_;
+  network_->send(id_, next, msg.str());
 }
 
-double Router::distvector_route_hop (unsigned id_target, vector<unsigned>& route) {
+void Router::distvector_route_hop (unsigned id_target) {
+}
+
+unsigned Router::dv_next_step (unsigned id_target, Metric metric) {
+  double    mincost = numeric_limits<double>::max();
+  unsigned  next = id_;
+  for (unordered_map<unsigned, double>::iterator it = neighbors_.begin();
+       it != neighbors_.end(); ++it) {
+    Dist dist = { it->second, 1 };
+    double cost = metric(dist) + metric(distvectors_[it->first][id_target]);
+    if (mincost > cost)
+      mincost = cost,
+      next = it->first;
+  }
+  return next;
+}
+
+double Router::distvector_extract_route (vector<unsigned>& route) const {
   route.push_back(id_);
   return 0.0;
 }
