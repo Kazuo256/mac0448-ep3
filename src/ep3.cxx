@@ -79,14 +79,18 @@ void run_prompt (const string& progname) {
   cout << endl;
 }
 
-static void simulation_step (const Bootstrap& bootstrap_method) {
-  for_each(routers.begin(), routers.end(), mem_fn(bootstrap_method));
-  // Uma vez executados o métodos de bootstrap, simula a troca de mensagens até
-  // não haver mais mensagens enviadas entre os roteadores
+static void simulate_network () {
   while (network.pending_msgs()) {
     Network::Packet packet = network.next_msg();
     routers[packet.id_receiver].receive_msg(packet.id_sender, packet.msg);
   }
+}
+
+static void simulation_step (const Bootstrap& bootstrap_method) {
+  for_each(routers.begin(), routers.end(), mem_fn(bootstrap_method));
+  // Uma vez executados o métodos de bootstrap, simula a troca de mensagens até
+  // não haver mais mensagens enviadas entre os roteadores
+  simulate_network();
 }
 
 static bool check_id (unsigned id) {
