@@ -34,6 +34,8 @@ const static pair<string, MsgHandler> handler_list[] = {
   make_pair("REQ_LINKSTATE", &Router::respond_linkstate),
   make_pair("ANSWER_LINKSTATE", &Router::receive_linkstate),
   make_pair("DISTVECTOR", &Router::receive_distvector),
+  make_pair("ROUTE_MS", &Router::route_ms),
+  make_pair("ROUTE_HOP", &Router::route_hop),
 };
 
 const static pair<string, MsgHandler> *const handler_end =
@@ -253,7 +255,33 @@ void Router::receive_distvector (unsigned id_sender, stringstream& args) {
     send_distvector();
 }
 
-// Métodos que calculam rotas
+void Router::route_ms (unsigned id_sender, stringstream& args) {
+  unsigned  id_target;
+  double    cost;
+  args >> id_target;
+  args >> cost;
+  if (id_target == id_) {
+    // TODO
+    return;
+  }
+  unsigned next = dv_next_step(id_target, mem_fn(&Dist::get_delay));
+  string routed;
+  getline(args, routed);
+  stringstream msg;
+  msg << "ROUTE_MS"
+      << sep << id_target
+      << sep << (cost+neighbors_[next])
+      << routed
+      << sep << id_;
+  network_->send(id_, next, msg.str());
+}
+
+void Router::route_hop (unsigned id_sender, stringstream& args) {
+
+}
+
+//== Métodos para calcular rotas ==//
+
 bool Router::comp_ms (unsigned id_1, unsigned id_2) const {
   return ls_cost_ms_[id_1] > ls_cost_ms_[id_2];
 }

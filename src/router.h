@@ -33,6 +33,8 @@ class Router {
     void respond_linkstate (unsigned id_sender, std::stringstream& args);
     void receive_linkstate (unsigned id_sender, std::stringstream& args);
     void receive_distvector (unsigned id_sender, std::stringstream& args);
+    void route_ms (unsigned id_sender, std::stringstream& args);
+    void route_hop (unsigned id_sender, std::stringstream& args);
     //== Métodos para calcular rotas ==//
     // Usados para estado de enlace:
     double linkstate_route_ms (unsigned id_target, std::vector<unsigned>& route);
