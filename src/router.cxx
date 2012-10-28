@@ -266,11 +266,21 @@ void Router::route_ms (unsigned id_sender, stringstream& args) {
   }
   string path;
   getline(args, path);
-  dv_follow_route(id_target, cost, path, mem_fn(&Dist::get_delay));
+  dv_follow_route(id_target, cost, path, mem_fn(&Dist::get_delay), "MS");
 }
 
 void Router::route_hop (unsigned id_sender, stringstream& args) {
-
+  unsigned  id_target;
+  double    cost;
+  args >> id_target;
+  args >> cost;
+  if (id_target == id_) {
+    // TODO
+    return;
+  }
+  string path;
+  getline(args, path);
+  dv_follow_route(id_target, cost, path, mem_fn(&Dist::get_hops), "HOP");
 }
 
 //== Métodos para calcular rotas ==//
@@ -377,19 +387,23 @@ double Router::linkstate_route_hop (unsigned id_target, vector<unsigned>& route)
 
 void Router::distvector_route_ms (unsigned id_target) {
   if (id_target == id_) return;
-  dv_follow_route(id_target, 0.0, "", mem_fn(&Dist::get_delay));
+  dv_follow_route(id_target, 0.0, "", mem_fn(&Dist::get_delay), "MS");
 }
 
 void Router::distvector_route_hop (unsigned id_target) {
+  if (id_target == id_) return;
+  dv_follow_route(id_target, 0.0, "", mem_fn(&Dist::get_hops), "HOP");
 }
 
 void Router::dv_follow_route (unsigned id_target, double cost,
-                              const string& path, Metric metric) {
-  unsigned next = dv_next_step(id_target, metric);
-  stringstream msg;
-  msg << "ROUTE_MS"
+                              const string& path, Metric metric,
+                              const string& metric_name) {
+  unsigned      next = dv_next_step(id_target, metric);
+  stringstream  msg;
+  Dist          dist = { neighbors_[next], 1 };
+  msg << "ROUTE_" << metric_name
       << sep << id_target
-      << sep << (cost+neighbors_[next])
+      << sep << (cost+metric(dist))
       << path
       << sep << id_;
   network_->send(id_, next, msg.str());

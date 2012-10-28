@@ -78,7 +78,8 @@ class Router {
     void send_distvector ();
     // Segue a rota do algoritmo de vetor de distâncias
     void dv_follow_route (unsigned id_target, double cost,
-                          const std::string& path, Metric metric);
+                          const std::string& path, Metric metric,
+                          const std::string& metric_name);
     // Encontra próximo passo da rota
     unsigned dv_next_step (unsigned id_target, Metric metric);
     //== Outros ==//
