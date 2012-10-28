@@ -65,7 +65,6 @@ void find_routes () {
 }
 
 void run_prompt (const string& progname) {
-  for_each(routers.begin(), routers.end(), mem_fn(&Router::dump_linkstate_table));
   cout << "## Inicando prompt..." << endl;
   while (cin.good()) {
     cout << progname << "$ ";
