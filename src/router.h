@@ -32,16 +32,16 @@ class Router {
     void respond_linkstate (unsigned id_sender, std::stringstream& args);
     void receive_linkstate (unsigned id_sender, std::stringstream& args);
     void receive_distvector (unsigned id_sender, std::stringstream& args);
-    // Métodos que calculam rotas
+    // Métodos para calcular rotas
     double linkstate_route_ms (unsigned id_target, std::vector<unsigned>& route);
     double linkstate_route_hop (unsigned id_target, std::vector<unsigned>& route);
+    double delay (unsigned origin, unsigned destiny);
+    bool comp_ms (unsigned id_1, unsigned id_2) const;
+    bool comp_hop (unsigned id_1, unsigned id_2) const;
     double distvector_route_ms (unsigned id_target, std::vector<unsigned>& route);
     double distvector_route_hop (unsigned id_target, std::vector<unsigned>& route);
     // Informações de debug
     void dump_linkstate_table () const;
-    double delay (unsigned origin, unsigned destiny);
-    bool comp_ms (unsigned id_1, unsigned id_2) const;
-    bool comp_hop (unsigned id_1, unsigned id_2) const;
   private:
     Network*                                      network_;
     unsigned                                      id_;
