@@ -17,10 +17,12 @@ I. Organização dos arquivos.
     |- objs.makefile
     |- deps.makefile
     |- LEIAME
+    |- sample_network
     |- src/
     |  |- main.cxx
     |  |- ...demais arquivos de código fonte...
 
+  O arquivo "sample_network" é a topologia de exemplo do enunciado.
 
 II. Compilação.
 
